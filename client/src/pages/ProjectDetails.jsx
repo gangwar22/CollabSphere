@@ -1,0 +1,321 @@
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import API from '../api/axios';
+import NoteEditor from '../components/NoteEditor';
+import FileUploader from '../components/FileUploader';
+import AIExplainPanel from '../components/AIExplainPanel';
+import AnalyticsPanel from '../components/AnalyticsPanel';
+import {
+    FileText, Files, Users, BarChart, Sparkles, Plus,
+    Trash2, UserPlus, Globe, Lock, ChevronLeft
+} from 'lucide-react';
+import Skeleton from '../components/Skeleton';
+import { useToast } from '../context/ToastContext';
+import Spinner from '../components/Spinner';
+
+const ProjectDetails = () => {
+    const { id } = useParams();
+    const navigate = useNavigate();
+    const [project, setProject] = useState(null);
+    const [notes, setNotes] = useState([]);
+    const [files, setFiles] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [activeTab, setActiveTab] = useState('notes'); // notes, files, team, analytics
+    const [editingNote, setEditingNote] = useState(null);
+    const [showAI, setShowAI] = useState(false);
+    const [aiInitialContent, setAiInitialContent] = useState('');
+    const [inviteEmail, setInviteEmail] = useState('');
+    const { addToast } = useToast();
+    
+    // Get current user from local storage
+    const userInfo = JSON.parse(localStorage.getItem('user'));
+    const isOwner = project && userInfo && (
+        (project.owner?._id ? project.owner._id === userInfo._id : project.owner === userInfo._id)
+    );
+
+    useEffect(() => {
+        fetchProjectData();
+    }, [id]);
+
+    const fetchProjectData = async () => {
+        try {
+            const pRes = await API.get(`/projects/${id}`);
+            const nRes = await API.get(`/notes/${id}`);
+            const fRes = await API.get(`/files/${id}`);
+            setProject(pRes.data);
+            setNotes(nRes.data);
+            setFiles(fRes.data);
+        } catch (err) {
+            console.error(err);
+            navigate('/dashboard');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSaveNote = async (noteData) => {
+        try {
+            console.log('Saving note:', noteData);
+            if (editingNote?._id) {
+                const res = await API.put(`/notes/${editingNote._id}`, noteData);
+                console.log('Update response:', res.data);
+                setNotes(notes.map(n => n._id === editingNote._id ? res.data : n));
+                addToast('Note updated!', 'success');
+            } else {
+                const res = await API.post('/notes', { ...noteData, projectId: id });
+                console.log('Create response:', res.data);
+                setNotes([res.data, ...notes]);
+                addToast('Note created!', 'success');
+            }
+            // fetchProjectData(); // Removed to avoid full layout flash
+            setEditingNote(null);
+        } catch (err) {
+            console.error('Note save error:', err.response?.data || err.message);
+            addToast(err.response?.data?.message || 'Save failed', 'error');
+        }
+    };
+
+    const handleDeleteNote = async (noteId) => {
+        if (!window.confirm('Delete this note?')) return;
+        try {
+            await API.delete(`/notes/${noteId}`);
+            setNotes(notes.filter(n => n._id !== noteId));
+            addToast('Note deleted', 'success');
+        } catch (err) {
+            console.error('Note delete error:', err.response?.data || err.message);
+            addToast(err.response?.data?.message || 'Delete failed', 'error');
+        }
+    };
+
+    const handleAddMember = async (e) => {
+        e.preventDefault();
+        try {
+            await API.post('/projects/add-member', {
+                projectId: id,
+                email: inviteEmail
+            });
+            fetchProjectData();
+            setInviteEmail('');
+            addToast(`Member added successfully!`, 'success');
+        } catch (err) {
+            addToast(err.response?.data?.message || 'Failed to add member', 'error');
+        }
+    };
+
+    const handleDeleteProject = async () => {
+        if (window.confirm('Are you sure you want to delete this project?')) {
+            try {
+                await API.delete(`/projects/${id}`);
+                addToast('Project deleted', 'success');
+                navigate('/dashboard');
+            } catch (err) {
+                addToast('Failed to delete project', 'error');
+            }
+        }
+    };
+
+    const openAI = (content) => {
+        setAiInitialContent(content);
+        setShowAI(true);
+    };
+
+    if (loading) return (
+        <div className="max-w-6xl mx-auto space-y-8 h-screen pt-10">
+            <div className="flex justify-between items-center bg-dark-card p-8 rounded-3xl animate-pulse">
+                <div className="space-y-4 w-1/2">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-10 w-64" />
+                    <Skeleton className="h-4 w-full" />
+                </div>
+                <div className="flex gap-2">
+                    <Skeleton className="h-10 w-24 rounded-xl" />
+                    <Skeleton className="h-10 w-24 rounded-xl" />
+                </div>
+            </div>
+            <div className="flex gap-4 border-b border-dark-border pb-2">
+                {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-8 w-24" />)}
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <Skeleton className="md:col-span-2 h-96 rounded-2xl" />
+                <Skeleton className="h-96 rounded-2xl" />
+            </div>
+        </div>
+    );
+    return (
+        <div className="animate-fade-in relative">
+            {/* Header */}
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-10 pb-10 border-b border-dark-border">
+                <div className="flex items-center space-x-6">
+                    <button onClick={() => navigate('/dashboard')} className="p-2 bg-dark-card border border-dark-border rounded-xl text-dark-muted hover:text-white transition-colors">
+                        <ChevronLeft size={20} />
+                    </button>
+                    <div>
+                        <div className="flex items-center space-x-3 mb-1">
+                            <h1 className="text-4xl font-bold text-white">{project.projectName}</h1>
+                            <button
+                                onClick={async () => {
+                                    if (!isOwner) return;
+                                    try {
+                                        const res = await API.put(`/projects/${id}/privacy`, { isPublic: !project.isPublic });
+                                        setProject(res.data);
+                                        addToast(`Project is now ${res.data.isPublic ? 'Public' : 'Private'}`, 'success');
+                                    } catch (err) {
+                                        addToast('Failed to update privacy', 'error');
+                                    }
+                                }}
+                                className={`flex items-center space-x-1 p-1 rounded-lg transition-colors ${isOwner ? 'hover:bg-dark-card' : 'cursor-default'}`}
+                                title={isOwner ? 'Change Privacy' : ''}
+                            >
+                                {project.isPublic ? <Globe size={20} className="text-green-500" /> : <Lock size={20} className="text-yellow-500" />}
+                                {isOwner && <span className="text-[10px] text-dark-muted font-bold ml-1 uppercase">{project.isPublic ? 'Public' : 'Private'}</span>}
+                            </button>
+                        </div>
+                        <p className="text-dark-muted">{project.description}</p>
+                    </div>
+                </div>
+                <div className="flex space-x-3">
+                    <button
+                        onClick={() => setShowAI(!showAI)}
+                        className="flex items-center space-x-2 bg-dark-card border border-primary-500/50 text-primary-500 px-5 py-2.5 rounded-xl hover:bg-primary-500/10 transition-all font-bold"
+                    >
+                        <Sparkles size={20} />
+                        <span>Gemini AI</span>
+                    </button>
+                    <button
+                        onClick={handleDeleteProject}
+                        className="flex items-center justify-center p-2.5 bg-red-500/10 border border-red-500/30 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all ml-3"
+                        title="Delete Project"
+                    >
+                        <Trash2 size={24} />
+                    </button>
+                </div>
+            </div>
+
+            <div className="flex flex-col lg:flex-row gap-10">
+                {/* Main Content Area */}
+                <div className={`flex-1 transition-all duration-300 ${showAI ? 'lg:mr-[400px]' : ''}`}>
+                    {/* Tabs */}
+                    <div className="flex space-x-8 mb-8 border-b border-dark-border overflow-x-auto whitespace-nowrap scrollbar-hide">
+                        {[
+                            { id: 'notes', label: 'Documentation', icon: FileText },
+                            { id: 'files', label: 'Files', icon: Files },
+                            { id: 'team', label: 'Collaborators', icon: Users },
+                            { id: 'analytics', label: 'Activity', icon: BarChart },
+                        ].map(({ id: tabId, label, icon: Icon }) => (
+                            <button
+                                key={tabId}
+                                onClick={() => setActiveTab(tabId)}
+                                className={`flex items-center space-x-2 pb-4 border-b-2 transition-all font-semibold ${activeTab === tabId ? 'border-primary-500 text-primary-500' : 'border-transparent text-dark-muted hover:text-dark-text'
+                                    }`}
+                            >
+                                <Icon size={18} />
+                                <span>{label}</span>
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* Action Button for Notes */}
+                    {activeTab === 'notes' && !editingNote && (
+                        <button
+                            onClick={() => setEditingNote({ title: '', content: '' })}
+                            className="w-full py-4 border-2 border-dashed border-dark-border rounded-2xl text-dark-muted hover:border-primary-500/50 hover:text-primary-500 transition-all flex items-center justify-center space-x-2 mb-8 bg-dark-bg/30"
+                        >
+                            <Plus size={20} />
+                            <span className="font-bold uppercase tracking-wider text-xs">Create New Documentation</span>
+                        </button>
+                    )}
+
+                    {/* Tab Panes */}
+                    <div className="tab-content min-h-[500px]">
+                        {activeTab === 'notes' && (
+                            editingNote ? (
+                                <NoteEditor
+                                    note={editingNote}
+                                    onSave={handleSaveNote}
+                                    onCancel={() => setEditingNote(null)}
+                                    onAIAction={openAI}
+                                />
+                            ) : (
+                                <div className="grid grid-cols-1 gap-4">
+                                    {notes.map(note => (
+                                        <div key={note._id} className="glass p-6 rounded-2xl flex flex-col md:flex-row justify-between gap-4 group hover:border-primary-500/30 transition-all">
+                                            <div>
+                                                <h3 className="text-xl font-bold text-white mb-2">{note.title}</h3>
+                                                <p className="text-dark-muted text-sm line-clamp-2">{note.content}</p>
+                                                <p className="text-[10px] text-dark-muted mt-4">By {note.createdBy?.name} • {new Date(note.createdAt).toLocaleDateString()}</p>
+                                            </div>
+                                            <div className="flex items-center space-x-2 md:opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <button onClick={() => setEditingNote(note)} className="p-2 text-dark-muted hover:text-primary-400">Edit</button>
+                                                <button onClick={() => openAI(note.content)} className="p-2 text-primary-400 hover:text-primary-300"><Sparkles size={18} /></button>
+                                                <button onClick={() => handleDeleteNote(note._id)} className="p-2 text-dark-muted hover:text-red-400"><Trash2 size={18} /></button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )
+                        )}
+
+                        {activeTab === 'files' && (
+                            <FileUploader projectId={id} files={files} onUploadSuccess={fetchProjectData} />
+                        )}
+
+                        {activeTab === 'team' && (
+                            <div className="max-w-xl mx-auto py-10">
+                                <form onSubmit={handleAddMember} className="flex gap-4 mb-10">
+                                    <input
+                                        type="email"
+                                        required
+                                        placeholder="Collaborator's email"
+                                        className="flex-1 bg-dark-card border border-dark-border rounded-xl px-4 py-3 outline-none focus:ring-1 focus:ring-primary-500"
+                                        value={inviteEmail}
+                                        onChange={(e) => setInviteEmail(e.target.value)}
+                                    />
+                                    <button type="submit" className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-xl font-bold flex items-center space-x-2">
+                                        <UserPlus size={20} />
+                                        <span>Invite</span>
+                                    </button>
+                                </form>
+
+                                <h4 className="text-lg font-bold text-white mb-6">Current Members</h4>
+                                <div className="space-y-4">
+                                    {project.members.map(member => (
+                                        <div key={member._id} className="flex items-center justify-between p-4 glass rounded-xl">
+                                            <div className="flex items-center space-x-3">
+                                                <div className="w-10 h-10 rounded-full bg-primary-500/10 flex items-center justify-center text-primary-500 font-bold">
+                                                    {member.name.charAt(0)}
+                                                </div>
+                                                <div>
+                                                    <p className="text-white font-medium">{member.name}</p>
+                                                    <p className="text-xs text-dark-muted">{member.email}</p>
+                                                </div>
+                                            </div>
+                                            {project.owner._id === member._id ? (
+                                                <span className="text-[10px] bg-primary-500/20 text-primary-400 px-2 py-1 rounded uppercase tracking-widest font-bold">Owner</span>
+                                            ) : (
+                                                <span className="text-[10px] bg-dark-border text-dark-muted px-2 py-1 rounded uppercase tracking-widest font-bold">Member</span>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'analytics' && (
+                            <AnalyticsPanel projectId={id} />
+                        )}
+                    </div>
+                </div>
+
+                {/* AI Sidebar */}
+                {showAI && (
+                    <div className="fixed top-[64px] right-0 bottom-0 w-full lg:w-[400px] border-l border-dark-border bg-dark-bg/80 backdrop-blur-xl animate-fade-in z-40 p-6 pt-10">
+                        <AIExplainPanel initialContent={aiInitialContent} onClose={() => setShowAI(false)} />
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
+
+
+export default ProjectDetails;
