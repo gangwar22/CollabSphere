@@ -46,13 +46,7 @@ const Navbar = ({ user, setUser }) => {
                                     Dashboard
                                 </Link>
 
-                                {(user?.isAdmin || user?.role === 'admin') && (
-                                    <Link to="/admin" className="text-sm font-medium text-primary-400 hover:text-primary-300 transition-colors px-2 py-1 flex items-center space-x-1">
-                                        <ShieldCheck size={14} />
-                                        <span>Admin</span>
-                                    </Link>
-                                )}
-                                
+
                                 <button className="p-1.5 text-dark-muted hover:text-dark-text transition-colors relative">
                                     <Bell size={18} />
                                     <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-primary-500 rounded-full border-2 border-dark-card"></span>

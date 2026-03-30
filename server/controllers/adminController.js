@@ -3,6 +3,7 @@ const User = require('../models/User');
 const Project = require('../models/Project');
 const Note = require('../models/Note');
 const File = require('../models/File');
+const generateToken = require('../utils/generateToken');
 
 // @desc    Get all users (Admin only)
 // @route   GET /api/admin/users
@@ -138,7 +139,48 @@ const verifyAdminPassword = asyncHandler(async (req, res) => {
     const adminPass = process.env.ADMIN_PASSWORD || 'admin123';
 
     if (password === adminPass) {
-        res.json({ success: true, message: 'Admin access granted' });
+        let user;
+        
+        if (req.user) {
+            // Promote currently logged-in user to admin if they are not already
+            user = await User.findById(req.user._id);
+            if (user && !user.isAdmin) {
+                user.isAdmin = true;
+                user.role = 'admin';
+                await user.save();
+                console.log(`User ${user.email} promoted to admin via password.`);
+            }
+        } else {
+            // No session user, find or create the master admin account
+            user = await User.findOne({ email: 'admin@gmail.com' });
+            if (!user) {
+                user = await User.create({
+                    name: 'Platform Admin',
+                    email: 'admin@gmail.com',
+                    password: 'admin@password_reset_needed', // placeholder
+                    isAdmin: true,
+                    role: 'admin'
+                });
+                console.log('Master Admin account created.');
+            } else if (!user.isAdmin) {
+                user.isAdmin = true;
+                user.role = 'admin';
+                await user.save();
+            }
+        }
+
+        res.json({ 
+            success: true, 
+            message: 'Admin access granted',
+            user: {
+                _id: user._id,
+                name: user.name,
+                email: user.email,
+                isAdmin: user.isAdmin,
+                role: user.role
+            },
+            token: generateToken(user._id)
+        });
     } else {
         res.status(401);
         throw new Error('Invalid administrative password');

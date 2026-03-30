@@ -40,11 +40,7 @@ const Login = ({ setUser }) => {
             setUser(data);
             addToast(`Welcome back, ${data.name}!`, 'success');
             
-            if (data.isAdmin || data.role === 'admin') {
-                navigate('/admin');
-            } else {
-                navigate('/dashboard');
-            }
+            navigate('/dashboard');
         } catch (err) {
             const msg = err.response?.data?.message || 'Login failed';
             setError(msg);

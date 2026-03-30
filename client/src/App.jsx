@@ -66,7 +66,7 @@ function App() {
                             <Route path="/register" element={<Register setUser={setUser} />} />
                             <Route path="/dashboard" element={<ProtectedRoute><Dashboard user={user} /></ProtectedRoute>} />
                             <Route path="/project/:id" element={<ProtectedRoute><ProjectDetails /></ProtectedRoute>} />
-                            <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+                            <Route path="/admin" element={<AdminDashboard />} />
                             <Route path="/public/:id" element={<PublicProject />} />
                             <Route path="/oauth-success" element={<OAuthSuccess />} />
                             <Route path="/" element={<Navigate to="/dashboard" />} />

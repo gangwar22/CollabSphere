@@ -1,4 +1,5 @@
-require('dotenv').config({ override: true });
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '../.env'), override: true });
 const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/db');
@@ -7,7 +8,6 @@ const passport = require('passport');
 const session = require('express-session');
 require('./config/passport');
 
-const path = require('path');
 
 // Connect to Database
 connectDB();

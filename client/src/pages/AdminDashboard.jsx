@@ -24,6 +24,8 @@ const AdminDashboard = () => {
     const { addToast } = useToast();
 
     const [isAuthorized, setIsAuthorized] = useState(false);
+
+
     const [adminPassword, setAdminPassword] = useState('');
     const [verifying, setVerifying] = useState(false);
 
@@ -33,6 +35,10 @@ const AdminDashboard = () => {
         try {
             const { data } = await API.post('/admin/verify', { password: adminPassword });
             if (data.success) {
+                if (data.token && data.user) {
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                }
                 setIsAuthorized(true);
                 addToast('Access Granted. Welcome, Admin.', 'success');
             }
@@ -71,19 +77,7 @@ const AdminDashboard = () => {
         }
     };
 
-    const promoteToAdmin = async () => {
-        try {
-            await API.get('/auth/make-admin');
-            addToast('Account promoted to Admin! Please re-login to see all features.', 'success');
-            setTimeout(() => {
-                localStorage.removeItem('token');
-                localStorage.removeItem('user');
-                window.location.href = '/login';
-            }, 2000);
-        } catch (err) {
-            addToast('Promotion failed: ' + (err.response?.data?.message || err.message), 'error');
-        }
-    };
+
 
     const handleViewUser = async (userId) => {
         try {
@@ -304,18 +298,7 @@ const AdminDashboard = () => {
                             <div className="text-center py-20 bg-dark-card/30">
                                 <Users size={40} className="mx-auto text-dark-muted mb-4 opacity-20" />
                                 <p className="text-dark-muted font-bold text-lg">No matching users found.</p>
-                                {!users.some(u => u.isAdmin || u.role === 'admin') && (
-                                    <div className="mt-8 flex flex-col items-center">
-                                        <p className="text-sm text-dark-muted mb-4 px-6 max-w-md">Admin data access restricted. Use the button below to elevate your account for testing.</p>
-                                        <button 
-                                            onClick={promoteToAdmin}
-                                            className="bg-primary-600 hover:bg-primary-700 text-white px-8 py-3 rounded-2xl font-bold transition-all flex items-center space-x-2"
-                                        >
-                                            <ShieldCheck size={20} />
-                                            <span>Promote Account to Admin</span>
-                                        </button>
-                                    </div>
-                                )}
+
                             </div>
                         )}
                     </div>

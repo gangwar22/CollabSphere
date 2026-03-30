@@ -21,14 +21,11 @@ const registerUser = asyncHandler(async (req, res) => {
         throw new Error('User already exists');
     }
 
-    // Create user - First user is Admin for development
-    const userCount = await User.countDocuments();
+    // Create user
     const user = await User.create({
         name,
         email,
         password,
-        isAdmin: userCount === 0,
-        role: userCount === 0 ? 'admin' : 'user'
     });
 
     if (user) {
