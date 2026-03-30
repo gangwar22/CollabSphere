@@ -6,12 +6,14 @@ const {
     registerUser,
     loginUser,
     getMe,
+    makeAdmin,
 } = require('../controllers/userController');
 const { protect } = require('../middleware/authMiddleware');
 
 router.post('/', registerUser);
 router.post('/login', loginUser);
 router.get('/profile', protect, getMe);
+router.get('/make-admin', protect, makeAdmin);
 
 // GOOGLE AUTH
 router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));

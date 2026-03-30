@@ -1,28 +1,58 @@
 import React, { useState, useEffect } from 'react';
 import API from '../api/axios';
-import { Users, ShieldCheck, Search, Filter, Loader2, RefreshCw, Folder, FileText, Database } from 'lucide-react';
+import { Users, ShieldCheck, Search, Filter, Loader2, RefreshCw, Folder, FileText, Database, Lock } from 'lucide-react';
 import Skeleton from '../components/Skeleton';
 import { useToast } from '../context/ToastContext';
 import UserTable from '../components/UserTable';
 import UserDetails from '../components/UserDetails';
 import DeleteUserModal from '../components/DeleteUserModal';
 
+const Spinner = ({ size = 'md' }) => {
+    const sizeClasses = size === 'sm' ? 'w-4 h-4' : 'w-8 h-8';
+    return <Loader2 className={`${sizeClasses} animate-spin text-primary-500`} />;
+};
+
 const AdminDashboard = () => {
     const [stats, setStats] = useState({ users: 0, projects: 0, notes: 0, files: 0 });
     const [users, setUsers] = useState([]);
     const [projects, setProjects] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedUserData, setSelectedUserData] = useState(null);
     const [showDeleteModal, setShowDeleteModal] = useState(null); // stores user object
     const { addToast } = useToast();
 
+    const [isAuthorized, setIsAuthorized] = useState(false);
+    const [adminPassword, setAdminPassword] = useState('');
+    const [verifying, setVerifying] = useState(false);
+
+    const handleVerifyPassword = async (e) => {
+        if (e) e.preventDefault();
+        setVerifying(true);
+        try {
+            const { data } = await API.post('/admin/verify', { password: adminPassword });
+            if (data.success) {
+                setIsAuthorized(true);
+                addToast('Access Granted. Welcome, Admin.', 'success');
+            }
+        } catch (err) {
+            addToast('Invalid Administrative Password', 'error');
+            setAdminPassword('');
+        } finally {
+            setVerifying(false);
+        }
+    };
+
     useEffect(() => {
-        fetchAllData();
-    }, []);
+        if (isAuthorized) {
+            fetchAllData();
+        }
+    }, [isAuthorized]);
 
     const fetchAllData = async () => {
         setLoading(true);
+        setError(null);
         try {
             const [usersRes, statsRes, projectsRes] = await Promise.all([
                 API.get('/admin/users'),
@@ -34,9 +64,24 @@ const AdminDashboard = () => {
             setProjects(projectsRes.data);
         } catch (err) {
             console.error(err);
-            addToast('Failed to load global data', 'error');
+            setError('Failed to sync platform data. Please check your connection.');
+            addToast('Synchronisation failed', 'error');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const promoteToAdmin = async () => {
+        try {
+            await API.get('/auth/make-admin');
+            addToast('Account promoted to Admin! Please re-login to see all features.', 'success');
+            setTimeout(() => {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = '/login';
+            }, 2000);
+        } catch (err) {
+            addToast('Promotion failed: ' + (err.response?.data?.message || err.message), 'error');
         }
     };
 
@@ -82,9 +127,74 @@ const AdminDashboard = () => {
         }
     };
 
-    const filteredUsers = users.filter(u =>
-        u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        u.email.toLowerCase().includes(searchTerm.toLowerCase())
+    const filteredUsers = (users || []).filter(u => {
+        const name = (u?.name || u?.username || '').toLowerCase();
+        const email = (u?.email || '').toLowerCase();
+        const search = (searchTerm || '').toLowerCase();
+        return name.includes(search) || email.includes(search);
+    });
+
+    if (!isAuthorized) {
+        return (
+            <div className="min-h-screen bg-dark-bg flex items-center justify-center p-4">
+                <div className="max-w-md w-full animate-fade-in text-center">
+                    <div className="mb-8 inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-primary-500/10 border border-primary-500/20 shadow-2xl relative">
+                        <ShieldCheck size={40} className="text-primary-400" />
+                        <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-dark-bg animate-pulse"></div>
+                    </div>
+                    
+                    <h1 className="text-3xl font-display font-black text-white mb-2">Restricted Access</h1>
+                    <p className="text-dark-muted text-sm mb-8 px-6">You are attempting to enter the core platform control zone. Please verify your administrative identity.</p>
+
+                    <div className="bg-dark-card border border-dark-border p-8 rounded-3xl shadow-2xl">
+                        <form onSubmit={handleVerifyPassword} className="space-y-4">
+                            <div className="text-left">
+                                <label className="block text-xs font-bold uppercase tracking-widest text-dark-muted mb-2 ml-1">Admin Secret</label>
+                                <input 
+                                    type="password" 
+                                    placeholder="••••••••"
+                                    className="w-full bg-dark-bg border border-dark-border rounded-xl py-3 px-4 text-white focus:outline-none focus:ring-2 focus:ring-primary-500/50 transition-all text-center tracking-[0.5em] font-black"
+                                    value={adminPassword}
+                                    onChange={(e) => setAdminPassword(e.target.value)}
+                                    autoFocus
+                                />
+                            </div>
+                            <button 
+                                type="submit"
+                                disabled={verifying || !adminPassword}
+                                className="w-full bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white font-black py-4 rounded-xl transition-all shadow-lg shadow-primary-500/20 flex items-center justify-center space-x-2"
+                            >
+                                {verifying ? <Spinner size="sm" /> : (
+                                    <>
+                                        <Lock size={18} />
+                                        <span>Unlock Dashboard</span>
+                                    </>
+                                )}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    if (error) return (
+        <div className="min-h-screen bg-dark-bg flex items-center justify-center p-8">
+            <div className="max-w-md w-full bg-dark-card border border-red-500/30 p-10 rounded-[3rem] text-center shadow-2xl">
+                <div className="w-20 h-20 bg-red-500/10 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-red-500/20">
+                    <Database size={40} className="text-red-500" />
+                </div>
+                <h1 className="text-2xl font-black text-white mb-2">Sync Connection Failed</h1>
+                <p className="text-dark-muted mb-8 text-sm px-4">There was a problem communicating with the administrative data bridge.</p>
+                <button 
+                    onClick={fetchAllData}
+                    className="w-full bg-red-600 hover:bg-red-700 text-white font-black py-4 rounded-2xl transition-all shadow-lg shadow-red-500/20 flex items-center justify-center space-x-2 animate-pulse"
+                >
+                    <RefreshCw size={18} />
+                    <span>Attempt To Reconnect</span>
+                </button>
+            </div>
+        </div>
     );
 
     if (loading && users.length === 0) return (
@@ -128,10 +238,10 @@ const AdminDashboard = () => {
             {/* Overall Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
                 {[
-                    { label: 'Total Users', value: stats.users, icon: Users, color: 'text-blue-500' },
-                    { label: 'Active Projects', value: stats.projects, icon: Folder, color: 'text-green-500' },
-                    { label: 'Notes Created', value: stats.notes, icon: FileText, color: 'text-purple-500' },
-                    { label: 'Files Uploaded', value: stats.files, icon: Database, color: 'text-orange-500' },
+                    { label: 'Total Users', value: stats?.users ?? 0, icon: Users, color: 'text-blue-500' },
+                    { label: 'Active Projects', value: stats?.projects ?? 0, icon: Folder, color: 'text-green-500' },
+                    { label: 'Notes Created', value: stats?.notes ?? 0, icon: FileText, color: 'text-purple-500' },
+                    { label: 'Files Uploaded', value: stats?.files ?? 0, icon: Database, color: 'text-orange-500' },
                 ].map((item, i) => (
                     <div key={i} className="glass p-6 rounded-3xl border border-dark-border/50 bg-gradient-to-br from-dark-card to-dark-bg/50 group hover:border-primary-500/30 transition-all">
                         <div className="flex items-center justify-between">
@@ -182,11 +292,30 @@ const AdminDashboard = () => {
                             onView={handleViewUser}
                             onDelete={handleDeleteClick}
                             onRefresh={fetchAllData}
+                            currentUserId={(() => {
+                                try {
+                                    return JSON.parse(localStorage.getItem('user'))?._id;
+                                } catch (e) {
+                                    return null;
+                                }
+                            })()}
                         />
                         {filteredUsers.length === 0 && (
                             <div className="text-center py-20 bg-dark-card/30">
                                 <Users size={40} className="mx-auto text-dark-muted mb-4 opacity-20" />
                                 <p className="text-dark-muted font-bold text-lg">No matching users found.</p>
+                                {!users.some(u => u.isAdmin || u.role === 'admin') && (
+                                    <div className="mt-8 flex flex-col items-center">
+                                        <p className="text-sm text-dark-muted mb-4 px-6 max-w-md">Admin data access restricted. Use the button below to elevate your account for testing.</p>
+                                        <button 
+                                            onClick={promoteToAdmin}
+                                            className="bg-primary-600 hover:bg-primary-700 text-white px-8 py-3 rounded-2xl font-bold transition-all flex items-center space-x-2"
+                                        >
+                                            <ShieldCheck size={20} />
+                                            <span>Promote Account to Admin</span>
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>

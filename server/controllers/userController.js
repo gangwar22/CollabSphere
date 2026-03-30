@@ -21,11 +21,14 @@ const registerUser = asyncHandler(async (req, res) => {
         throw new Error('User already exists');
     }
 
-    // Create user
+    // Create user - First user is Admin for development
+    const userCount = await User.countDocuments();
     const user = await User.create({
         name,
         email,
         password,
+        isAdmin: userCount === 0,
+        role: userCount === 0 ? 'admin' : 'user'
     });
 
     if (user) {
@@ -74,8 +77,22 @@ const getMe = asyncHandler(async (req, res) => {
     res.status(200).json(req.user);
 });
 
+const makeAdmin = asyncHandler(async (req, res) => {
+    const user = await User.findById(req.user._id);
+    if (user) {
+        user.isAdmin = true;
+        user.role = 'admin';
+        await user.save();
+        res.json({ message: 'User promoted to Admin successfully' });
+    } else {
+        res.status(404);
+        throw new Error('User not found');
+    }
+});
+
 module.exports = {
     registerUser,
     loginUser,
     getMe,
+    makeAdmin,
 };

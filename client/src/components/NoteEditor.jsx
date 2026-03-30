@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import SimpleMDE from 'react-simplemde-editor';
 import 'easymde/dist/easymde.min.css';
 import { Save, X, Sparkles, ChevronRight } from 'lucide-react';
@@ -11,13 +11,13 @@ const NoteEditor = ({ note, onSave, onCancel, onAIAction }) => {
     const [loading, setLoading] = useState(false);
     const { addToast } = useToast();
 
-    const mdeOptions = {
+    const mdeOptions = useMemo(() => ({
         autofocus: true,
         spellChecker: false,
         placeholder: "Write your documentation in markdown...",
         status: false,
         maxHeight: "400px",
-    };
+    }), []);
 
     const handleSave = async () => {
         if (!title.trim() || !content.trim()) {

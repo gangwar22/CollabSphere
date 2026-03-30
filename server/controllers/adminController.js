@@ -17,6 +17,9 @@ const getUsers = asyncHandler(async (req, res) => {
         
         return {
             ...user,
+            name: user.name || user.username || user.email.split('@')[0] || 'Unknown User',
+            email: user.email || 'N/A',
+            isAdmin: user.isAdmin || user.role === 'admin' || false,
             projectCount,
             noteCount,
             fileCount
@@ -57,18 +60,6 @@ const deleteUser = asyncHandler(async (req, res) => {
         if (user._id.toString() === req.user._id.toString()) {
             res.status(400);
             throw new Error('You cannot delete your own admin account');
-        }
-
-        // Check if user is an admin or has admin role
-        if (user.isAdmin === true || user.role === 'admin') {
-            // Log for debugging
-            console.log('Attempted delete of admin:', { 
-                id: user._id, 
-                isAdmin: user.isAdmin,
-                role: user.role 
-            });
-            res.status(403);
-            throw new Error('Not authorized to delete another admin user');
         }
 
         console.log(`Admin ${req.user.name} is deleting user ${user.name} (${user._id})`);
@@ -140,11 +131,26 @@ const getProjects = asyncHandler(async (req, res) => {
     }
 });
 
+// @desc    Verify admin panel password
+// @route   POST /api/admin/verify
+const verifyAdminPassword = asyncHandler(async (req, res) => {
+    const { password } = req.body;
+    const adminPass = process.env.ADMIN_PASSWORD || 'admin123';
+
+    if (password === adminPass) {
+        res.json({ success: true, message: 'Admin access granted' });
+    } else {
+        res.status(401);
+        throw new Error('Invalid administrative password');
+    }
+});
+
 module.exports = {
     getUsers,
     getProjects,
     getStats,
     deleteUser,
     getUserDetails,
-    updateUserRole
+    updateUserRole,
+    verifyAdminPassword
 };

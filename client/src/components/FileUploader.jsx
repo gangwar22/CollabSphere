@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import API from '../api/axios';
 import { Upload, File, Image, Trash2, Loader, X } from 'lucide-react';
 
-const FileUploader = ({ projectId, files, onUploadSuccess }) => {
+const FileUploader = ({ projectId, files, onUploadSuccess, showUploadOnly = false }) => {
     const [uploading, setUploading] = useState(false);
     const [previewFile, setPreviewFile] = useState(null);
+    const [codeContent, setCodeContent] = useState('');
+    const [loadingContent, setLoadingContent] = useState(false);
 
     const handleFileChange = async (e) => {
         const file = e.target.files[0];
@@ -42,8 +44,32 @@ const FileUploader = ({ projectId, files, onUploadSuccess }) => {
     };
 
     const isPreviewable = (fileName) => {
-        return /\.(jpg|jpeg|png|gif|pdf|txt)$/i.test(fileName);
+        return /\.(jpg|jpeg|png|gif|webp|pdf|txt|js|jsx|ts|tsx|py|java|cpp|c|h|html|css|scss|json|md|sql|sh|rs|go|php|rb)$/i.test(fileName);
     };
+
+    const isCodeFile = (fileName) => {
+        return /\.(js|jsx|ts|tsx|py|java|cpp|c|h|html|css|scss|json|md|sql|sh|rs|go|php|rb|txt)$/i.test(fileName);
+    };
+
+    React.useEffect(() => {
+        if (previewFile && isCodeFile(previewFile.fileName)) {
+            const fetchContent = async () => {
+                setLoadingContent(true);
+                setCodeContent('');
+                try {
+                    const response = await fetch(previewFile.fileUrl);
+                    const text = await response.text();
+                    setCodeContent(text);
+                } catch (err) {
+                    console.error('Failed to fetch file content:', err);
+                    setCodeContent('Failed to load file content.');
+                } finally {
+                    setLoadingContent(false);
+                }
+            };
+            fetchContent();
+        }
+    }, [previewFile]);
 
     return (
         <div className="space-y-6">
@@ -70,43 +96,45 @@ const FileUploader = ({ projectId, files, onUploadSuccess }) => {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {files.map((file) => (
-                    <div key={file._id} className="glass p-4 rounded-xl flex items-center justify-between group hover:border-primary-500/30 transition-all">
-                        <div className="flex items-center space-x-3 overflow-hidden">
-                            <div className="p-2 bg-dark-bg rounded-lg text-primary-500 shrink-0">
-                                {file.fileName.match(/\.(jpg|jpeg|png|gif)$/i) ? <Image size={20} /> : <File size={20} />}
+            {!showUploadOnly && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {files.map((file) => (
+                        <div key={file._id} className="glass p-4 rounded-xl flex items-center justify-between group hover:border-primary-500/30 transition-all">
+                            <div className="flex items-center space-x-3 overflow-hidden">
+                                <div className="p-2 bg-dark-bg rounded-lg text-primary-500 shrink-0">
+                                    {file.fileName.match(/\.(jpg|jpeg|png|gif)$/i) ? <Image size={20} /> : <File size={20} />}
+                                </div>
+                                <div className="overflow-hidden">
+                                    <p className="text-sm font-medium text-white truncate">{file.fileName}</p>
+                                    <p className="text-[10px] text-dark-muted">By {file.uploadedBy?.name || 'Unknown'}</p>
+                                </div>
                             </div>
-                            <div className="overflow-hidden">
-                                <p className="text-sm font-medium text-white truncate">{file.fileName}</p>
-                                <p className="text-[10px] text-dark-muted">By {file.uploadedBy?.name || 'Unknown'}</p>
+                            <div className="flex items-center space-x-2">
+                                {isPreviewable(file.fileName) ? (
+                                    <button
+                                        onClick={() => setPreviewFile(file)}
+                                        className="bg-primary-500/10 text-primary-500 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-primary-500 hover:text-white transition-all"
+                                    >
+                                        View
+                                    </button>
+                                ) : (
+                                    <a
+                                        href={file.fileUrl.startsWith('http') ? file.fileUrl : `http://localhost:5000${file.fileUrl}`}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="bg-dark-border text-dark-muted px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-dark-muted hover:text-white transition-all"
+                                    >
+                                        Open
+                                    </a>
+                                )}
                             </div>
                         </div>
-                        <div className="flex items-center space-x-2">
-                            {isPreviewable(file.fileName) ? (
-                                <button
-                                    onClick={() => setPreviewFile(file)}
-                                    className="bg-primary-500/10 text-primary-500 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-primary-500 hover:text-white transition-all"
-                                >
-                                    View
-                                </button>
-                            ) : (
-                                <a
-                                    href={file.fileUrl.startsWith('http') ? file.fileUrl : `http://localhost:5000${file.fileUrl}`}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="bg-dark-border text-dark-muted px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-dark-muted hover:text-white transition-all"
-                                >
-                                    Open
-                                </a>
-                            )}
-                        </div>
-                    </div>
-                ))}
-            </div>
+                    ))}
+                </div>
+            )}
 
             {/* FEATURE 1: PREVIEW MODAL */}
-            {previewFile && (
+            {!showUploadOnly && previewFile && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm animate-fade-in">
                     <div className="relative w-full max-w-5xl h-[90vh] bg-dark-card rounded-3xl overflow-hidden flex flex-col border border-dark-border">
                         <div className="flex justify-between items-center p-6 border-b border-dark-border bg-dark-card/50">
@@ -119,7 +147,7 @@ const FileUploader = ({ projectId, files, onUploadSuccess }) => {
                             </button>
                         </div>
                         <div className="flex-1 bg-black/20 overflow-auto flex items-center justify-center">
-                            {previewFile.fileName.toLowerCase().match(/\.(jpg|jpeg|png|gif)$/) ? (
+                            {previewFile.fileName.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp)$/) ? (
                                 <img 
                                     src={previewFile.fileUrl.startsWith('http') ? previewFile.fileUrl : `http://localhost:5000${previewFile.fileUrl}`} 
                                     alt={previewFile.fileName} 
@@ -128,9 +156,22 @@ const FileUploader = ({ projectId, files, onUploadSuccess }) => {
                             ) : previewFile.fileName.toLowerCase().endsWith('.pdf') ? (
                                 <iframe 
                                     src={`${previewFile.fileUrl.startsWith('http') ? previewFile.fileUrl : `http://localhost:5000${previewFile.fileUrl}`}#toolbar=0`} 
-                                    className="w-full h-full border-none bg-white" 
+                                    className="w-full h-full border-none bg-white font-display" 
                                     title="File Preview"
                                 />
+                            ) : isCodeFile(previewFile.fileName) ? (
+                                <div className="w-full h-full p-6 font-mono text-sm overflow-auto bg-dark-bg/50">
+                                    {loadingContent ? (
+                                        <div className="flex flex-col items-center justify-center h-full">
+                                            <Loader className="animate-spin text-primary-500 mb-2" size={32} />
+                                            <p className="text-dark-muted">Loading content...</p>
+                                        </div>
+                                    ) : (
+                                        <pre className="whitespace-pre-wrap break-words text-dark-text leading-relaxed">
+                                            {codeContent}
+                                        </pre>
+                                    )}
+                                </div>
                             ) : (
                                 <div className="text-center p-10 bg-dark-bg/50 rounded-3xl border border-dark-border">
                                     <File size={64} className="text-primary-400 mx-auto mb-4" />

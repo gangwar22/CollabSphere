@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import API from '../api/axios';
-import { Mail, Lock, ArrowRight, Github } from 'lucide-react';
+import { Code, ArrowRight, Github } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 import Spinner from '../components/Spinner';
 
@@ -12,11 +12,9 @@ const Login = ({ setUser }) => {
     const navigate = useNavigate();
     const { addToast } = useToast();
 
-    // Check for user info after OAuth success (handled in OAuthSuccess, but dashboard need it)
     useEffect(() => {
         const tokenToken = localStorage.getItem('token');
         if (tokenToken && !localStorage.getItem('user')) {
-            // Fetch profile if we have token but no user data (mostly for first time OAuth)
             const fetchProfile = async () => {
                 try {
                     const { data } = await API.get('/auth/profile');
@@ -42,7 +40,6 @@ const Login = ({ setUser }) => {
             setUser(data);
             addToast(`Welcome back, ${data.name}!`, 'success');
             
-            // Redirect admin to admin panel, regular users to dashboard
             if (data.isAdmin || data.role === 'admin') {
                 navigate('/admin');
             } else {
@@ -58,99 +55,90 @@ const Login = ({ setUser }) => {
     };
 
     return (
-        <div className="max-w-md mx-auto mt-20 animate-fade-in">
-            <div className="glass p-8 rounded-2xl shadow-2xl">
-                <h2 className="text-3xl font-bold mb-6 text-center text-white">Welcome Back</h2>
+        <div className="min-h-[80vh] flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8 animate-fade-in">
+            <div className="mb-8 flex flex-col items-center">
+                <div className="bg-dark-card p-3 rounded-xl border border-dark-border mb-4 shadow-lg">
+                    <Code size={40} className="text-primary-500" />
+                </div>
+                <h2 className="text-2xl font-display font-bold text-white">Sign in to CollabSphere</h2>
+            </div>
 
+            <div className="w-full max-w-[340px]">
                 {error && (
-                    <div className="bg-red-500/10 border border-red-500/50 text-red-500 p-3 rounded-lg mb-6 text-sm">
+                    <div className="bg-red-500/10 border border-red-500/30 text-red-500 p-3 rounded-md mb-4 text-xs font-medium text-center">
                         {error}
                     </div>
                 )}
 
-                <form onSubmit={handleSubmit} className="space-y-6">
-                    <div>
-                        <label className="block text-sm font-medium mb-2 text-dark-muted">Email Address</label>
-                        <div className="relative">
-                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-dark-muted" size={18} />
+                <div className="github-card p-6 bg-dark-card border-dark-border shadow-2xl">
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-medium mb-1.5 text-dark-text">Email address</label>
                             <input
                                 type="email"
                                 required
-                                className="w-full bg-dark-bg border border-dark-border rounded-xl py-3 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all text-white"
-                                placeholder="name@company.com"
+                                className="w-full bg-dark-bg border border-dark-border text-dark-text rounded-md py-1.5 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                                 value={formData.email}
                                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                             />
                         </div>
-                    </div>
 
-                    <div>
-                        <label className="block text-sm font-medium mb-2 text-dark-muted">Password</label>
-                        <div className="relative">
-                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-dark-muted" size={18} />
+                        <div>
+                            <div className="flex items-center justify-between mb-1.5">
+                                <label className="block text-sm font-medium text-dark-text">Password</label>
+                                <button type="button" className="text-xs text-primary-500 hover:underline">Forgot password?</button>
+                            </div>
                             <input
                                 type="password"
                                 required
-                                className="w-full bg-dark-bg border border-dark-border rounded-xl py-3 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all text-white"
-                                placeholder="••••••••"
+                                className="w-full bg-dark-bg border border-dark-border text-dark-text rounded-md py-1.5 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                                 value={formData.password}
                                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                             />
                         </div>
-                    </div>
 
-                    <div className="flex items-center justify-between text-sm">
-                        <label className="flex items-center space-x-2 text-dark-muted cursor-pointer hover:text-white transition-colors">
-                            <input type="checkbox" className="w-4 h-4 rounded border-dark-border bg-dark-bg text-primary-600 focus:ring-offset-0 focus:ring-primary-500" />
-                            <span>Remember me</span>
-                        </label>
-                        <button type="button" className="text-primary-400 hover:text-primary-300 transition-colors">Forgot password?</button>
-                    </div>
-
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full bg-primary-600 hover:bg-primary-700 text-white font-bold py-3 rounded-xl transition-all flex items-center justify-center space-x-2 shadow-lg disabled:opacity-50"
-                    >
-                        {loading ? <Spinner size="sm" /> : (
-                            <>
-                                <span>Sign In</span>
-                                <ArrowRight size={20} />
-                            </>
-                        )}
-                    </button>
-                </form>
-
-                <div className="mt-8">
-                    <div className="relative mb-8">
-                        <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-dark-border"></div></div>
-                        <div className="relative flex justify-center text-xs uppercase"><span className="bg-dark-card px-2 text-dark-muted">Or continue with</span></div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        <button 
-                            onClick={() => window.location.href = 'http://localhost:5000/api/auth/google'}
-                            type="button" 
-                            className="flex items-center justify-center space-x-2 py-2.5 border border-dark-border rounded-xl hover:bg-dark-bg transition-all text-sm font-medium text-white"
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="w-full github-btn-primary !py-2 flex items-center justify-center gap-2 disabled:opacity-50 mt-2"
                         >
-                            <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-5 h-5" alt="Google" />
-                            <span>Google</span>
+                            {loading ? <Spinner size="sm" /> : <span>Sign in</span>}
                         </button>
-                        <button 
-                            onClick={() => window.location.href = 'http://localhost:5000/api/auth/github'}
-                            type="button" 
-                            className="flex items-center justify-center space-x-2 py-2.5 border border-dark-border rounded-xl hover:bg-dark-bg transition-all text-sm font-medium text-white"
-                        >
-                            <img src="https://www.svgrepo.com/show/512317/github-142.svg" className="w-5 h-5 invert" alt="GitHub" />
-                            <span>GitHub</span>
-                        </button>
+                    </form>
+
+                    <div className="mt-6">
+                        <div className="relative mb-6">
+                            <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-dark-border"></div></div>
+                            <div className="relative flex justify-center text-[10px] uppercase"><span className="bg-dark-card px-2 text-dark-muted font-bold tracking-widest">Or continue with</span></div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                            <button 
+                                onClick={() => window.location.href = 'http://localhost:5000/api/auth/google'}
+                                type="button" 
+                                className="github-btn-secondary !py-2 flex items-center justify-center gap-2"
+                            >
+                                <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-4 h-4" alt="Google" />
+                                <span className="text-xs">Google</span>
+                            </button>
+                            <button 
+                                onClick={() => window.location.href = 'http://localhost:5000/api/auth/github'}
+                                type="button" 
+                                className="github-btn-secondary !py-2 flex items-center justify-center gap-2"
+                            >
+                                <Github size={16} />
+                                <span className="text-xs">GitHub</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
-                <p className="mt-8 text-center text-dark-muted text-sm">
-                    Don't have an account?{' '}
-                    <Link to="/register" className="text-primary-400 hover:text-primary-300 font-medium">Create one</Link>
-                </p>
+                <div className="mt-6 border border-dark-border rounded-md p-4 text-center">
+                    <p className="text-sm text-dark-text">
+                        New to CollabSphere?{' '}
+                        <Link to="/register" className="text-primary-500 hover:underline font-medium">Create an account</Link>
+                    </p>
+                </div>
             </div>
         </div>
     );

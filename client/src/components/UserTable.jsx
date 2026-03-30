@@ -3,7 +3,7 @@ import { Eye, Trash2, ShieldCheck, ShieldAlert, UserPlus, UserMinus } from 'luci
 import API from '../api/axios';
 import { useToast } from '../context/ToastContext';
 
-const UserTable = ({ users, onView, onDelete, onRefresh }) => {
+const UserTable = ({ users, onView, onDelete, onRefresh, currentUserId }) => {
     const { addToast } = useToast();
 
     const toggleAdminStatus = async (userId, currentRole) => {
@@ -40,11 +40,15 @@ const UserTable = ({ users, onView, onDelete, onRefresh }) => {
                             <td className="px-6 py-5">
                                 <div className="flex items-center space-x-4">
                                     <div className="w-12 h-12 rounded-2xl bg-primary-500/10 flex items-center justify-center text-primary-500 font-black border border-primary-500/20 shadow-inner">
-                                        {user.name.charAt(0)}
+                                        {(user.name || user.username || user.email || '?').charAt(0).toUpperCase()}
                                     </div>
                                     <div className="flex flex-col">
-                                        <span className="text-white font-bold text-lg group-hover:text-primary-400 transition-colors uppercase tracking-tight">{user.name}</span>
-                                        <span className="text-dark-muted text-[10px] font-mono italic">ID: {user._id.slice(-6)}</span>
+                                        <span className="text-white font-bold text-lg group-hover:text-primary-400 transition-colors uppercase tracking-tight">
+                                            {user.name || user.username || user.email.split('@')[0]}
+                                        </span>
+                                        <span className="text-dark-muted text-[10px] font-mono italic">
+                                            ID: {(user._id || '').toString().slice(-6)}
+                                        </span>
                                     </div>
                                 </div>
                             </td>
@@ -95,11 +99,11 @@ const UserTable = ({ users, onView, onDelete, onRefresh }) => {
                                     >
                                         <Eye size={20} />
                                     </button>
-                                    {user.role !== 'admin' && (
+                                    {user._id !== currentUserId && (
                                         <button 
                                             onClick={() => onDelete(user._id)}
                                             className="p-2.5 bg-red-500/10 border border-red-500/20 text-red-500 rounded-xl hover:bg-red-500/20 transition-all hover:scale-110 shadow-lg"
-                                            title="Delete User Payload"
+                                            title="Purge Identity"
                                         >
                                             <Trash2 size={20} />
                                         </button>

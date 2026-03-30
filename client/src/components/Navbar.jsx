@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Layout, LogOut, Code, User as UserIcon } from 'lucide-react';
+import { LogOut, Code, User as UserIcon, Search, Bell, Plus, ChevronDown, ShieldCheck } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 
 const Navbar = ({ user, setUser }) => {
@@ -16,45 +16,77 @@ const Navbar = ({ user, setUser }) => {
     };
 
     return (
-        <nav className="border-b border-dark-border bg-dark-card sticky top-0 z-50">
-            <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-                <Link to="/" className="flex items-center space-x-2 text-primary-500 font-bold text-xl">
-                    <Code size={32} />
-                    <span>CollabSphere</span>
-                </Link>
+        <nav className="border-b border-dark-border bg-dark-card sticky top-0 z-50 h-14 flex items-center">
+            <div className="container mx-auto px-4 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4 flex-1">
+                    <Link to="/" className="flex items-center space-x-2 shrink-0">
+                        <div className="bg-dark-bg p-1.5 rounded-lg border border-dark-border">
+                            <Code size={20} className="text-primary-500" />
+                        </div>
+                        <span className="font-display font-bold text-lg hidden md:block brand-gradient">CollabSphere</span>
+                    </Link>
 
-                <div className="flex items-center space-x-6">
+                    {user && (
+                        <div className="relative group max-w-sm w-full hidden sm:block">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-dark-muted" size={16} />
+                            <input
+                                type="text"
+                                placeholder="Type / to search"
+                                className="w-full bg-dark-bg border border-dark-border rounded-md py-1.5 pl-9 pr-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500 transition-all placeholder:text-dark-muted/50"
+                            />
+                        </div>
+                    )}
+                </div>
+
+                <div className="flex items-center space-x-3">
                     {user ? (
                         <>
-                            {(user.isAdmin || user.role === 'admin') ? (
-                                <Link to="/admin" className="text-primary-500 font-bold hover:text-primary-400 transition-colors mr-4 border-b-2 border-primary-500 pb-1">
-                                    Admin Panel
+                            <div className="flex items-center space-x-1 sm:space-x-4">
+                                <Link to="/dashboard" className="text-sm font-medium text-dark-text hover:text-primary-500 transition-colors px-2 py-1">
+                                    Dashboard
                                 </Link>
-                            ) : (
-                                <Link to="/dashboard" className="text-dark-muted hover:text-dark-text transition-colors">Dashboard</Link>
-                            )}
-                            <div className="flex items-center space-x-4 ml-4 pl-4 border-l border-dark-border">
-                                <div className="flex items-center space-x-2">
-                                    <UserIcon size={20} className="text-dark-muted" />
-                                    <div className="flex flex-col">
-                                        <span className="text-sm font-medium leading-tight">{user.name}</span>
-                                        {(user.isAdmin || user.role === 'admin') && <span className="text-[10px] text-red-500 font-black uppercase tracking-tighter">Admin</span>}
+
+                                {(user?.isAdmin || user?.role === 'admin') && (
+                                    <Link to="/admin" className="text-sm font-medium text-primary-400 hover:text-primary-300 transition-colors px-2 py-1 flex items-center space-x-1">
+                                        <ShieldCheck size={14} />
+                                        <span>Admin</span>
+                                    </Link>
+                                )}
+                                
+                                <button className="p-1.5 text-dark-muted hover:text-dark-text transition-colors relative">
+                                    <Bell size={18} />
+                                    <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-primary-500 rounded-full border-2 border-dark-card"></span>
+                                </button>
+
+                                <button className="p-1.5 text-dark-muted hover:text-dark-text transition-colors">
+                                    <Plus size={18} />
+                                </button>
+                            </div>
+
+                            <div className="flex items-center space-x-3 ml-2 pl-4 border-l border-dark-border">
+                                <div className="flex items-center space-x-2 cursor-pointer group">
+                                    <div className="w-7 h-7 rounded-full bg-primary-500/10 border border-primary-500/20 flex items-center justify-center">
+                                        <UserIcon size={14} className="text-primary-500" />
+                                    </div>
+                                    <div className="hidden lg:flex items-center gap-1">
+                                        <span className="text-xs font-semibold text-dark-text group-hover:text-primary-500 transition-colors">{user.name}</span>
+                                        <ChevronDown size={12} className="text-dark-muted" />
                                     </div>
                                 </div>
                                 <button
                                     onClick={handleLogout}
-                                    className="p-2 text-dark-muted hover:text-red-400 transition-colors"
+                                    className="p-1.5 text-dark-muted hover:text-red-500 transition-colors"
                                     title="Logout"
                                 >
-                                    <LogOut size={20} />
+                                    <LogOut size={18} />
                                 </button>
                             </div>
                         </>
                     ) : (
-                        <div className="space-x-4">
-                            <Link to="/login" className="text-dark-muted hover:text-dark-text transition-colors">Login</Link>
-                            <Link to="/register" className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg transition-all shadow-lg hover:shadow-primary-500/20">
-                                Register
+                        <div className="flex items-center space-x-4">
+                            <Link to="/login" className="text-sm font-medium text-dark-muted hover:text-dark-text transition-colors">Sign in</Link>
+                            <Link to="/register" className="github-btn-primary">
+                                Sign up
                             </Link>
                         </div>
                     )}

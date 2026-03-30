@@ -11,19 +11,29 @@ cloudinary.config({
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: async (req, file) => {
-    const extension = file.originalname.split('.').pop().toLowerCase();
-    const isImage = ['jpg', 'png', 'jpeg'].includes(extension);
-    
     return {
       folder: 'collabsphere_uploads',
-      resource_type: isImage ? 'image' : 'raw', 
+      resource_type: 'auto', 
       public_id: file.originalname.split('.')[0] + '-' + Date.now(),
-      // Remove allowed_formats to see if it fixes PNG issue, or keep them
-      allowed_formats: ['jpg', 'png', 'jpeg', 'pdf', 'txt'],
     };
   },
 });
 
-const upload = multer({ storage: storage });
+const upload = multer({ 
+  storage: storage,
+  fileFilter: (req, file, cb) => {
+    const allowedExtensions = [
+      '.jpg', '.jpeg', '.png', '.gif', '.webp', '.pdf', '.txt', 
+      '.js', '.jsx', '.ts', '.tsx', '.py', '.java', '.cpp', '.c', 
+      '.h', '.html', '.css', '.scss', '.json', '.md', '.sql', '.sh', '.rs', '.go', '.php', '.rb'
+    ];
+    const extension = '.' + file.originalname.split('.').pop().toLowerCase();
+    if (allowedExtensions.includes(extension)) {
+      cb(null, true);
+    } else {
+      cb(new Error('File format not supported'), false);
+    }
+  }
+});
 
 module.exports = { cloudinary, upload };
