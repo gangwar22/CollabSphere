@@ -15,25 +15,25 @@ const explainContent = asyncHandler(async (req, res) => {
     }
 
     try {
-        const model = genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
+        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
         const prompt = `Explain the following ${type || 'content'} in a clear, concise way for a developer:\n\n${content}`;
 
         const result = await model.generateContent(prompt);
         const response = await result.response;
         
         if (!response || !response.candidates || response.candidates.length === 0) {
-            throw new Error('No candidates returned from Gemini API');
+            throw new Error('No response candidates from Gemini API');
         }
 
         const text = response.text();
 
         if (!text) {
-            throw new Error('Empty response from Gemini');
+            throw new Error('Empty response text from Gemini');
         }
 
         res.status(200).json({ explanation: text });
     } catch (error) {
-        console.error('Gemini API Error:', error);
+        console.error('Gemini Explain Error:', error);
         res.status(500);
         throw new Error(`AI generation failed: ${error.message}`);
     }
@@ -51,25 +51,25 @@ const generateDocs = asyncHandler(async (req, res) => {
     }
 
     try {
-        const model = genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
+        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
         const prompt = `Generate a professional markdown documentation for the following code:\n\n${code}`;
 
         const result = await model.generateContent(prompt);
         const response = await result.response;
         
         if (!response || !response.candidates || response.candidates.length === 0) {
-            throw new Error('No candidates returned from Gemini API');
+            throw new Error('No response candidates from Gemini API');
         }
 
         const text = response.text();
 
         if (!text) {
-            throw new Error('Empty response from Gemini');
+            throw new Error('Empty response text from Gemini');
         }
 
         res.status(200).json({ documentation: text });
     } catch (error) {
-        console.error('Gemini API Error:', error);
+        console.error('Gemini Docs Error:', error);
         res.status(500);
         throw new Error(`AI generation failed: ${error.message}`);
     }
@@ -87,25 +87,25 @@ const generateReadme = asyncHandler(async (req, res) => {
     }
 
     try {
-        const model = genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
+        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
         const prompt = `Create a comprehensive README.md file for a project named "${projectName}" with the following description: ${description}`;
 
         const result = await model.generateContent(prompt);
         const response = await result.response;
         
         if (!response || !response.candidates || response.candidates.length === 0) {
-            throw new Error('No candidates returned from Gemini API');
+            throw new Error('No response candidates from Gemini API');
         }
 
         const text = response.text();
 
         if (!text) {
-            throw new Error('Empty response from Gemini');
+            throw new Error('Empty response text from Gemini');
         }
 
         res.status(200).json({ readme: text });
     } catch (error) {
-        console.error('Gemini API Error:', error);
+        console.error('Gemini Readme Error:', error);
         res.status(500);
         throw new Error(`AI generation failed: ${error.message}`);
     }

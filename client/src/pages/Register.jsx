@@ -96,6 +96,32 @@ const Register = ({ setUser }) => {
                             {loading ? <Spinner size="sm" /> : <span>Create account</span>}
                         </button>
                     </form>
+
+                    <div className="mt-6">
+                        <div className="relative mb-6">
+                            <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-dark-border"></div></div>
+                            <div className="relative flex justify-center text-[10px] uppercase"><span className="bg-dark-card px-2 text-dark-muted font-bold tracking-widest">Or continue with</span></div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                            <button 
+                                onClick={() => window.location.href = 'http://localhost:5000/api/users/google'}
+                                type="button" 
+                                className="github-btn-secondary !py-2 flex items-center justify-center gap-2"
+                            >
+                                <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-4 h-4" alt="Google" />
+                                <span className="text-xs">Google</span>
+                            </button>
+                            <button 
+                                onClick={() => window.location.href = 'http://localhost:5000/api/users/github'}
+                                type="button" 
+                                className="github-btn-secondary !py-2 flex items-center justify-center gap-2"
+                            >
+                                <Github size={16} />
+                                <span className="text-xs">GitHub</span>
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <div className="mt-6 border border-dark-border rounded-md p-4 text-center">

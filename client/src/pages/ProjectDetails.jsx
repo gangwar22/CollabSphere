@@ -224,7 +224,7 @@ const ProjectDetails = () => {
                 <div className="flex items-center gap-2 text-xl">
                     <GitBranch size={20} className="text-dark-muted" />
                     <nav className="flex items-center gap-1">
-                        <Link to="/dashboard" className="text-primary-500 hover:underline">{project.owner?.name || userInfo.name}</Link>
+                        <Link to="/dashboard" className="text-primary-500 hover:underline">{project.owner?.name || userInfo?.name}</Link>
                         <span className="text-dark-muted">/</span>
                         <span className="font-bold whitespace-nowrap">{project.projectName}</span>
                         <span className="ml-2 text-xs font-medium px-2 py-0.5 rounded-full border border-dark-border text-dark-muted h-fit">

@@ -14,13 +14,18 @@ const uploadFile = asyncHandler(async (req, res) => {
         throw new Error('Please upload a file');
     }
 
+    if (!projectId) {
+        res.status(400);
+        throw new Error('Please provide a projectId');
+    }
+
     const project = await Project.findById(projectId);
     if (!project) {
         res.status(404);
         throw new Error('Project not found');
     }
 
-    // Check membership
+    // Check membership or ownership
     const isMember = project.members.some(m => m.toString() === req.user._id.toString());
     const isOwner = project.owner.toString() === req.user._id.toString();
     if (!isMember && !isOwner) {
@@ -37,20 +42,19 @@ const uploadFile = asyncHandler(async (req, res) => {
     if (existingFile) {
         console.log(`Replacing existing file: ${existingFile.fileName}`);
         // 1. Delete old file from Cloudinary
-        if (existingFile.cloudinaryId) {
-            await cloudinary.uploader.destroy(existingFile.cloudinaryId);
-        } else {
-            // Fallback if cloudinaryId wasn't stored (extract from URL)
-            const publicId = existingFile.fileUrl.split('/').pop().split('.')[0];
-            await cloudinary.uploader.destroy(`collabsphere_uploads/${publicId}`);
+        try {
+            if (existingFile.cloudinaryId) {
+                await cloudinary.uploader.destroy(existingFile.cloudinaryId);
+            } else {
+                const publicId = existingFile.fileUrl.split('/').pop().split('.')[0];
+                await cloudinary.uploader.destroy(`collabsphere_uploads/${publicId}`);
+            }
+        } catch (err) {
+            console.error('Error deleting old file during replace:', err);
         }
         // 2. Delete old file document from MongoDB
         await existingFile.deleteOne();
     }
-
-    // 3. Upload new file is already handled by multer-storage-cloudinary middleware
-    // req.file.path is the secure_url
-    // req.file.filename is the public_id provided by multer-storage-cloudinary
 
     console.log('RECV FILE:', req.file);
 
@@ -76,8 +80,11 @@ const getProjectFiles = asyncHandler(async (req, res) => {
         throw new Error('Project not found');
     }
 
+    const isMember = project.members.some(m => m.toString() === req.user._id.toString());
+    const isOwner = project.owner.toString() === req.user._id.toString();
+
     // If private, check membership
-    if (!project.isPublic && !project.members.includes(req.user._id)) {
+    if (!project.isPublic && !isMember && !isOwner) {
         res.status(401);
         throw new Error('Not authorized to view files');
     }

@@ -118,10 +118,10 @@ const Dashboard = ({ user }) => {
                     {/* User Profile Section */}
                     <div className="flex flex-col items-center lg:items-start text-center lg:text-left pb-8 border-b border-dark-border">
                         <div className="w-20 h-20 rounded-full bg-primary-500/10 border-2 border-primary-500/20 flex items-center justify-center mb-4 overflow-hidden shadow-lg border-accent/20">
-                            <span className="text-2xl font-bold text-primary-500">{user.name?.charAt(0) || 'U'}</span>
+                            <span className="text-2xl font-bold text-primary-500">{user?.name?.charAt(0) || 'U'}</span>
                         </div>
-                        <h1 className="text-xl font-bold text-white mb-1">{user.name}</h1>
-                        <p className="text-dark-muted text-xs font-medium mb-3">{user.email}</p>
+                        <h1 className="text-xl font-bold text-white mb-1">{user?.name || 'User'}</h1>
+                        <p className="text-dark-muted text-xs font-medium mb-3">{user?.email || 'Email'}</p>
                         <button 
                             onClick={() => addToast('Edit profile feature coming soon!', 'info')}
                             className="w-full github-btn-secondary !text-xs !py-1 flex items-center justify-center gap-1.5 hover:border-accent/40 hover:text-accent transition-all"

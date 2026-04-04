@@ -110,7 +110,7 @@ const Login = ({ setUser }) => {
 
                         <div className="grid grid-cols-2 gap-3">
                             <button 
-                                onClick={() => window.location.href = 'http://localhost:5000/api/auth/google'}
+                                onClick={() => window.location.href = 'http://localhost:5000/api/users/google'}
                                 type="button" 
                                 className="github-btn-secondary !py-2 flex items-center justify-center gap-2"
                             >
@@ -118,7 +118,7 @@ const Login = ({ setUser }) => {
                                 <span className="text-xs">Google</span>
                             </button>
                             <button 
-                                onClick={() => window.location.href = 'http://localhost:5000/api/auth/github'}
+                                onClick={() => window.location.href = 'http://localhost:5000/api/users/github'}
                                 type="button" 
                                 className="github-btn-secondary !py-2 flex items-center justify-center gap-2"
                             >

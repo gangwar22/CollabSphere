@@ -16,6 +16,8 @@ function App() {
 
     useEffect(() => {
         const savedUser = localStorage.getItem('user');
+        const token = localStorage.getItem('token');
+
         if (savedUser) {
             try {
                 setUser(JSON.parse(savedUser));
@@ -23,6 +25,27 @@ function App() {
                 console.error('Failed to parse saved user', e);
                 localStorage.removeItem('user');
             }
+        } else if (token) {
+            // Fetch profile if token exists but no user info
+            const fetchProfile = async () => {
+                try {
+                    const response = await fetch('http://localhost:5000/api/users/profile', {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    });
+                    const data = await response.json();
+                    if (response.ok) {
+                        localStorage.setItem('user', JSON.stringify(data));
+                        setUser(data);
+                    } else {
+                        localStorage.removeItem('token');
+                    }
+                } catch (err) {
+                    console.error('Failed to fetch profile', err);
+                }
+            };
+            fetchProfile();
         }
     }, []);
 
@@ -48,9 +71,12 @@ function App() {
             console.error('Failed to parse user data', e);
         }
 
-        // Bypassing redirect for development access if manually requested via URL
-        if (!userInfo) {
+        if (!localStorage.getItem('token')) {
             return <Navigate to="/login" />;
+        }
+        
+        if (userInfo?.role !== 'admin' && !userInfo?.isAdmin) {
+            return <Navigate to="/dashboard" />;
         }
         
         return children;
@@ -68,7 +94,7 @@ function App() {
                             <Route path="/dashboard" element={<ProtectedRoute><Dashboard user={user} /></ProtectedRoute>} />
                             <Route path="/project/:id" element={<ProtectedRoute><ProjectDetails /></ProtectedRoute>} />
                             <Route path="/profile/:id" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
-                            <Route path="/admin" element={<AdminDashboard />} />
+                            <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
                             <Route path="/public/:id" element={<PublicProject />} />
                             <Route path="/oauth-success" element={<OAuthSuccess />} />
                             <Route path="/" element={<Navigate to="/dashboard" />} />

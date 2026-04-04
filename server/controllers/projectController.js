@@ -122,7 +122,7 @@ const respondToInvitation = asyncHandler(async (req, res) => {
             const alreadyMember = project.members.some(m => m.toString() === invitation.invitee.toString());
             
             if (!alreadyMember) {
-                // IMPORTANT: Push the ObjectId, not the string, and ensure it's saved
+                // Ensure ownership logic is also respected if they were somehow not in members
                 project.members.push(invitation.invitee);
                 await project.save();
                 console.log(`User ${invitation.invitee} added to project ${project._id}`);
@@ -202,6 +202,7 @@ const deleteProject = asyncHandler(async (req, res) => {
 // @route   GET /api/projects/:id
 // @access  Mixed
 const getProjectDetails = asyncHandler(async (req, res) => {
+    // Populate both owner and members as objects
     const project = await Project.findById(req.params.id)
         .populate('owner', 'name email')
         .populate('members', 'name email');
@@ -213,9 +214,20 @@ const getProjectDetails = asyncHandler(async (req, res) => {
 
     // If private, check membership
     if (!project.isPublic) {
-        if (!req.user || !project.members.some(m => m._id.toString() === req.user._id.toString())) {
+        // req.user might be undefined if it's a guest trying to access a private project
+        if (!req.user) {
             res.status(401);
-            throw new Error('Not authorized to view this project');
+            throw new Error('Please log in to view this private project');
+        }
+
+        // Check if req.user._id is in the members list
+        // Since we populated members, each 'm' is an object with '_id'
+        const isMember = project.members.some(m => m._id.toString() === req.user._id.toString());
+        const isOwner = project.owner._id.toString() === req.user._id.toString();
+
+        if (!isMember && !isOwner) {
+            res.status(401);
+            throw new Error('Not authorized to view this private project');
         }
     }
 
