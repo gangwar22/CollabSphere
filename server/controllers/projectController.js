@@ -3,6 +3,7 @@ const Project = require('../models/Project');
 const User = require('../models/User');
 const Note = require('../models/Note');
 const File = require('../models/File');
+const Invitation = require('../models/Invitation');
 
 // @desc    Create new project
 // @route   POST /api/projects
@@ -30,14 +31,15 @@ const createProject = asyncHandler(async (req, res) => {
 // @route   GET /api/projects/my-projects
 // @access  Private
 const getMyProjects = asyncHandler(async (req, res) => {
+    // Specifically search for projects where members array contains the user's ID
     const projects = await Project.find({
-        members: { $in: [req.user._id] },
+        members: req.user._id
     }).populate('owner', 'name email');
 
     res.status(200).json(projects);
 });
 
-// @desc    Add member to project
+// @desc    Add member (Send Invitation)
 // @route   POST /api/projects/add-member
 // @access  Private
 const addMember = asyncHandler(async (req, res) => {
@@ -60,18 +62,115 @@ const addMember = asyncHandler(async (req, res) => {
 
     if (!userToAdd) {
         res.status(404);
-        throw new Error('User not found');
+        throw new Error(`User with email ${email} not found. Please ask them to register first.`);
     }
 
-    if (project.members.includes(userToAdd._id)) {
+    if (project.members.some(memberId => memberId.toString() === userToAdd._id.toString())) {
         res.status(400);
-        throw new Error('User already a member');
+        throw new Error('User already a member of this project');
     }
 
-    project.members.push(userToAdd._id);
+    // Check for existing pending invitation
+    const existingInvite = await Invitation.findOne({
+        project: projectId,
+        invitee: userToAdd._id,
+        status: 'pending'
+    });
+
+    if (existingInvite) {
+        res.status(400);
+        throw new Error('An invitation is already pending for this user');
+    }
+
+    // Create invitation instead of direct add
+    await Invitation.create({
+        project: projectId,
+        inviter: req.user._id,
+        invitee: userToAdd._id,
+    });
+
+    res.status(200).json({ message: 'Invitation sent successfully' });
+});
+
+// @desc    Get my invitations
+// @route   GET /api/projects/invitations
+// @access  Private
+const getMyInvitations = asyncHandler(async (req, res) => {
+    const invitations = await Invitation.find({ invitee: req.user._id, status: 'pending' })
+        .populate('project', 'projectName')
+        .populate('inviter', 'name email');
+    res.json(invitations);
+});
+
+// @desc    Respond to invitation
+// @route   POST /api/projects/invitations/:id/respond
+// @access  Private
+const respondToInvitation = asyncHandler(async (req, res) => {
+    const { accept } = req.body;
+    const invitation = await Invitation.findById(req.params.id);
+
+    if (!invitation || invitation.invitee.toString() !== req.user._id.toString() || invitation.status !== 'pending') {
+        res.status(404);
+        throw new Error('Invitation not found or unauthorized');
+    }
+
+    if (accept) {
+        invitation.status = 'accepted';
+        const project = await Project.findById(invitation.project);
+        if (project) {
+            // Check if user is already a member
+            const alreadyMember = project.members.some(m => m.toString() === invitation.invitee.toString());
+            
+            if (!alreadyMember) {
+                // IMPORTANT: Push the ObjectId, not the string, and ensure it's saved
+                project.members.push(invitation.invitee);
+                await project.save();
+                console.log(`User ${invitation.invitee} added to project ${project._id}`);
+            }
+        } else {
+            res.status(404);
+            throw new Error('Project associated with invitation not found');
+        }
+    } else {
+        invitation.status = 'rejected';
+    }
+
+    await invitation.save();
+    res.json({ 
+        message: accept ? 'Invitation accepted and project added' : 'Invitation rejected',
+        projectId: invitation.project 
+    });
+});
+
+// @desc    Remove member from project
+// @route   POST /api/projects/remove-member
+// @access  Private (Owner only)
+const removeMember = asyncHandler(async (req, res) => {
+    const { projectId, userId } = req.body;
+
+    const project = await Project.findById(projectId);
+
+    if (!project) {
+        res.status(404);
+        throw new Error('Project not found');
+    }
+
+    // Only owner can remove members
+    if (project.owner.toString() !== req.user._id.toString()) {
+        res.status(401);
+        throw new Error('Not authorized to remove members');
+    }
+
+    // Cannot remove owner
+    if (userId === project.owner.toString()) {
+        res.status(400);
+        throw new Error('Cannot remove the project owner');
+    }
+
+    project.members = project.members.filter(m => m.toString() !== userId);
     await project.save();
 
-    res.status(200).json(project);
+    res.status(200).json({ message: 'Member removed successfully', members: project.members });
 });
 
 // @desc    Delete project
@@ -167,6 +266,9 @@ module.exports = {
     createProject,
     getMyProjects,
     addMember,
+    removeMember,
+    getMyInvitations,
+    respondToInvitation,
     deleteProject,
     getProjectDetails,
     getPublicProject,

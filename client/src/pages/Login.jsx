@@ -17,7 +17,7 @@ const Login = ({ setUser }) => {
         if (tokenToken && !localStorage.getItem('user')) {
             const fetchProfile = async () => {
                 try {
-                    const { data } = await API.get('/auth/profile');
+                    const { data } = await API.get('/users/profile');
                     localStorage.setItem('user', JSON.stringify(data));
                     setUser(data);
                 } catch (err) {
@@ -34,7 +34,7 @@ const Login = ({ setUser }) => {
         setLoading(true);
 
         try {
-            const { data } = await API.post('/auth/login', formData);
+            const { data } = await API.post('/users/login', formData);
             localStorage.setItem('token', data.token);
             localStorage.setItem('user', JSON.stringify(data));
             setUser(data);

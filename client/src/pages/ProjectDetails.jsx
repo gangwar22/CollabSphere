@@ -82,12 +82,16 @@ const ProjectDetails = () => {
     const [inviteEmail, setInviteEmail] = useState('');
     const [showUpload, setShowUpload] = useState(false);
     const [previewFile, setPreviewFile] = useState(null);
+    const [expandedNotes, setExpandedNotes] = useState({});
     const [codeContent, setCodeContent] = useState('');
     const [loadingContent, setLoadingContent] = useState(false);
+    const [actionLoading, setActionLoading] = useState(false);
     const { addToast } = useToast();
     
     // Get current user from local storage
     const userInfo = JSON.parse(localStorage.getItem('user'));
+    
+    // Robust isOwner check
     const isOwner = project && userInfo && (
         (project.owner?._id ? project.owner._id === userInfo._id : project.owner === userInfo._id)
     );
@@ -106,6 +110,7 @@ const ProjectDetails = () => {
             setFiles(fRes.data);
         } catch (err) {
             console.error(err);
+            addToast('Failed to load project details', 'error');
             navigate('/dashboard');
         } finally {
             setLoading(false);
@@ -114,6 +119,7 @@ const ProjectDetails = () => {
 
     const handleSaveNote = async (noteData) => {
         try {
+            setActionLoading(true);
             if (editingNote?._id) {
                 const res = await API.put(`/notes/${editingNote._id}`, noteData);
                 setNotes(notes.map(n => n._id === editingNote._id ? res.data : n));
@@ -126,32 +132,58 @@ const ProjectDetails = () => {
             setEditingNote(null);
         } catch (err) {
             addToast(err.response?.data?.message || 'Save failed', 'error');
+        } finally {
+            setActionLoading(false);
         }
     };
 
     const handleDeleteNote = async (noteId) => {
         if (!window.confirm('Delete this note?')) return;
         try {
+            setActionLoading(true);
             await API.delete(`/notes/${noteId}`);
             setNotes(notes.filter(n => n._id !== noteId));
             addToast('Note deleted', 'success');
         } catch (err) {
             addToast(err.response?.data?.message || 'Delete failed', 'error');
+        } finally {
+            setActionLoading(false);
         }
     };
 
     const handleAddMember = async (e) => {
         e.preventDefault();
         try {
+            setActionLoading(true);
             await API.post('/projects/add-member', {
                 projectId: id,
                 email: inviteEmail
             });
-            fetchProjectData();
             setInviteEmail('');
-            addToast(`Member added successfully!`, 'success');
+            addToast(`Invitation sent successfully!`, 'success');
+            // Re-fetch project to show updated member list or pending status if handled
+            fetchProjectData();
         } catch (err) {
             addToast(err.response?.data?.message || 'Failed to add member', 'error');
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const handleRemoveMember = async (userId) => {
+        if (!window.confirm('Are you sure you want to remove this member?')) return;
+        try {
+            setActionLoading(true);
+            await API.post('/projects/remove-member', {
+                projectId: id,
+                userId: userId
+            });
+            await fetchProjectData();
+            addToast('Member removed successfully', 'success');
+        } catch (err) {
+            addToast(err.response?.data?.message || 'Failed to remove member', 'error');
+        } finally {
+            setActionLoading(false);
         }
     };
 
@@ -371,7 +403,9 @@ const ProjectDetails = () => {
                                                 <div className="flex justify-between items-start">
                                                     <div>
                                                         <h3 className="text-lg font-bold text-primary-500 hover:underline cursor-pointer" onClick={() => setEditingNote(note)}>{note.title}</h3>
-                                                        <p className="text-dark-muted text-sm line-clamp-3 mt-1 leading-relaxed">{note.content}</p>
+                                                        <p className="text-dark-muted text-sm mt-2 leading-relaxed whitespace-pre-wrap">
+                                                            {note.content}
+                                                        </p>
                                                         <div className="flex items-center gap-3 mt-4">
                                                             <div className="w-5 h-5 rounded-full bg-primary-500/10 flex items-center justify-center text-[10px] font-bold text-primary-500">
                                                                 {note.createdBy?.name?.charAt(0) || 'U'}
@@ -477,20 +511,26 @@ const ProjectDetails = () => {
                             <div className="space-y-10 max-w-3xl mx-auto py-6">
                                 <section>
                                     <h3 className="text-lg font-bold border-b border-dark-border pb-2 mb-6">Manage Access</h3>
-                                    <form onSubmit={handleAddMember} className="flex gap-3 mb-8">
-                                        <input
-                                            type="email"
-                                            required
-                                            placeholder="Collaborator's email"
-                                            className="flex-1 bg-dark-bg border border-dark-border rounded-md px-3 py-1.5 text-sm outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
-                                            value={inviteEmail}
-                                            onChange={(e) => setInviteEmail(e.target.value)}
-                                        />
-                                        <button type="submit" className="github-btn-primary flex items-center gap-2">
-                                            <UserPlus size={16} />
-                                            <span>Add Member</span>
-                                        </button>
-                                    </form>
+                                    {isOwner && (
+                                        <form onSubmit={handleAddMember} className="flex gap-3 mb-8">
+                                            <input
+                                                type="email"
+                                                required
+                                                placeholder="Collaborator's email"
+                                                className="flex-1 bg-dark-bg border border-dark-border rounded-md px-3 py-1.5 text-sm outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
+                                                value={inviteEmail}
+                                                onChange={(e) => setInviteEmail(e.target.value)}
+                                            />
+                                            <button 
+                                                type="submit" 
+                                                disabled={actionLoading}
+                                                className="github-btn-primary flex items-center gap-2 disabled:opacity-50"
+                                            >
+                                                {actionLoading ? <Spinner size="16" /> : <UserPlus size={16} />}
+                                                <span>Invite</span>
+                                            </button>
+                                        </form>
+                                    )}
 
                                     <div className="github-card overflow-hidden">
                                         {project.members.map((member, index) => (
@@ -504,29 +544,52 @@ const ProjectDetails = () => {
                                                         <p className="text-[10px] text-dark-muted">{member.email}</p>
                                                     </div>
                                                 </div>
-                                                <span className={`text-[10px] px-2 py-0.5 rounded-full border border-dark-border font-medium ${project.owner?._id === member._id || project.owner === member._id ? 'bg-primary-500/10 text-primary-500' : 'text-dark-muted'}`}>
-                                                    {project.owner?._id === member._id || project.owner === member._id ? 'Owner' : 'Member'}
-                                                </span>
+                                                <div className="flex items-center gap-2">
+                                                    {(project.owner?._id === member._id || project.owner === member._id) ? (
+                                                        <span className="text-[10px] px-2 py-0.5 rounded-full border border-dark-border font-medium bg-primary-500/10 text-primary-500">
+                                                            Owner
+                                                        </span>
+                                                    ) : (
+                                                        <>
+                                                            <span className="text-[10px] px-2 py-0.5 rounded-full border border-dark-border font-medium text-dark-muted">
+                                                                Member
+                                                            </span>
+                                                            {isOwner && (
+                                                                <button
+                                                                    onClick={() => handleRemoveMember(member._id)}
+                                                                    disabled={actionLoading}
+                                                                    className="px-2 py-1 flex items-center gap-1 text-[10px] font-bold text-red-500 hover:bg-red-500/10 border border-red-500/20 rounded transition-all disabled:opacity-50"
+                                                                    title="Remove Member"
+                                                                >
+                                                                    <X size={12} />
+                                                                    <span>REMOVE</span>
+                                                                </button>
+                                                            )}
+                                                        </>
+                                                    )}
+                                                </div>
                                             </div>
                                         ))}
                                     </div>
                                 </section>
 
-                                <section>
-                                    <h3 className="text-lg font-bold border-b border-dark-border pb-2 mb-6 text-red-500">Danger Zone</h3>
-                                    <div className="github-card border-red-500/30 p-4 flex items-center justify-between">
-                                        <div>
-                                            <h4 className="font-bold text-sm">Delete this repository</h4>
-                                            <p className="text-[10px] text-dark-muted mt-1">Once you delete a repository, there is no going back. Please be certain.</p>
+                                {isOwner && (
+                                    <section>
+                                        <h3 className="text-lg font-bold border-b border-dark-border pb-2 mb-6 text-red-500">Danger Zone</h3>
+                                        <div className="github-card border-red-500/30 p-4 flex items-center justify-between">
+                                            <div>
+                                                <h4 className="font-bold text-sm">Delete this repository</h4>
+                                                <p className="text-[10px] text-dark-muted mt-1">Once you delete a repository, there is no going back. Please be certain.</p>
+                                            </div>
+                                            <button
+                                                onClick={handleDeleteProject}
+                                                className="px-3 py-1.5 rounded-md border border-red-500/30 text-red-500 text-xs font-bold hover:bg-red-500 hover:text-white transition-all"
+                                            >
+                                                Delete Repository
+                                            </button>
                                         </div>
-                                        <button
-                                            onClick={handleDeleteProject}
-                                            className="px-3 py-1.5 rounded-md border border-red-500/30 text-red-500 text-xs font-bold hover:bg-red-500 hover:text-white transition-all"
-                                        >
-                                            Delete Repository
-                                        </button>
-                                    </div>
-                                </section>
+                                    </section>
+                                )}
                             </div>
                         )}
                     </div>

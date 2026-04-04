@@ -5,6 +5,7 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import ProjectDetails from './pages/ProjectDetails';
 import PublicProject from './pages/PublicProject';
+import UserProfile from './pages/UserProfile';
 import AdminDashboard from './pages/AdminDashboard';
 import OAuthSuccess from './pages/OAuthSuccess';
 import Navbar from './components/Navbar';
@@ -66,6 +67,7 @@ function App() {
                             <Route path="/register" element={<Register setUser={setUser} />} />
                             <Route path="/dashboard" element={<ProtectedRoute><Dashboard user={user} /></ProtectedRoute>} />
                             <Route path="/project/:id" element={<ProtectedRoute><ProjectDetails /></ProtectedRoute>} />
+                            <Route path="/profile/:id" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
                             <Route path="/admin" element={<AdminDashboard />} />
                             <Route path="/public/:id" element={<PublicProject />} />
                             <Route path="/oauth-success" element={<OAuthSuccess />} />

@@ -6,13 +6,20 @@ const {
     registerUser,
     loginUser,
     getMe,
+    updateMe,
     makeAdmin,
+    searchUsers,
+    getUserProfile,
 } = require('../controllers/userController');
 const { protect } = require('../middleware/authMiddleware');
+const { upload } = require('../config/cloudinary');
 
 router.post('/', registerUser);
 router.post('/login', loginUser);
 router.get('/profile', protect, getMe);
+router.put('/profile', protect, upload.single('profilePicture'), updateMe);
+router.get('/search', protect, searchUsers);
+router.get('/profile/:id', protect, getUserProfile);
 router.get('/make-admin', protect, makeAdmin);
 
 // GOOGLE AUTH

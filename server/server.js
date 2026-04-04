@@ -32,7 +32,7 @@ app.use(passport.session());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Routes
-app.use('/api/auth', require('./routes/userRoutes'));
+app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/projects', require('./routes/projectRoutes'));
 app.use('/api/notes', require('./routes/noteRoutes'));
 app.use('/api/files', require('./routes/fileRoutes'));

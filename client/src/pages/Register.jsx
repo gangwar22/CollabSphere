@@ -18,7 +18,7 @@ const Register = ({ setUser }) => {
         setLoading(true);
 
         try {
-            const { data } = await API.post('/auth', formData);
+            const { data } = await API.post('/users', formData);
             localStorage.setItem('token', data.token);
             localStorage.setItem('user', JSON.stringify(data));
             setUser(data);

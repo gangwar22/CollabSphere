@@ -8,7 +8,9 @@ import { useToast } from '../context/ToastContext';
 
 const Dashboard = ({ user }) => {
     const [projects, setProjects] = useState([]);
+    const [invitations, setInvitations] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [isIdLoading, setIsIdLoading] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [activeTab, setActiveTab] = useState('overview');
@@ -16,6 +18,7 @@ const Dashboard = ({ user }) => {
 
     useEffect(() => {
         fetchProjects();
+        fetchInvitations();
     }, []);
 
     const fetchProjects = async () => {
@@ -27,6 +30,29 @@ const Dashboard = ({ user }) => {
             setProjects([]);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchInvitations = async () => {
+        try {
+            const { data } = await API.get('/projects/invitations');
+            setInvitations(data);
+        } catch (err) {
+            console.error('Failed to fetch invitations', err);
+        }
+    };
+
+    const handleInvitationResponse = async (id, accept) => {
+        setIsIdLoading(id);
+        try {
+            await API.post(`/projects/invitations/${id}/respond`, { accept });
+            addToast(`Invitation ${accept ? 'accepted' : 'rejected'}`, 'success');
+            fetchInvitations();
+            if (accept) fetchProjects();
+        } catch (err) {
+            addToast('Action failed', 'error');
+        } finally {
+            setIsIdLoading(null);
         }
     };
 
@@ -103,6 +129,42 @@ const Dashboard = ({ user }) => {
                             Edit profile
                         </button>
                     </div>
+
+                    {/* Invitations Section */}
+                    {invitations.length > 0 && (
+                        <div className="space-y-4">
+                            <h2 className="text-xs font-bold text-white flex items-center gap-2 uppercase tracking-widest pl-2">
+                                <Star size={14} className="text-yellow-500 fill-yellow-500/20" /> 
+                                Invitations ({invitations.length})
+                            </h2>
+                            <div className="space-y-3">
+                                {invitations.map(invite => (
+                                    <div key={invite._id} className="github-card p-4 bg-dark-card border-yellow-500/20 shadow-lg shadow-yellow-500/5">
+                                        <p className="text-[10px] text-dark-muted mb-2">
+                                            <span className="text-white font-bold">{invite.inviter.name}</span> invited you to:
+                                        </p>
+                                        <h3 className="text-xs font-bold text-primary-500 mb-3 truncate">{invite.project.projectName}</h3>
+                                        <div className="flex gap-2">
+                                            <button 
+                                                disabled={isIdLoading === invite._id}
+                                                onClick={() => handleInvitationResponse(invite._id, true)} 
+                                                className="flex-1 bg-primary-500 hover:bg-primary-400 text-dark-bg text-[9px] font-black py-1.5 rounded transition-all disabled:opacity-50"
+                                            >
+                                                {isIdLoading === invite._id ? '...' : 'ACCEPT'}
+                                            </button>
+                                            <button 
+                                                disabled={isIdLoading === invite._id}
+                                                onClick={() => handleInvitationResponse(invite._id, false)} 
+                                                className="flex-1 bg-dark-bg hover:bg-red-500/10 text-red-500 border border-red-500/30 text-[9px] font-black py-1.5 rounded transition-all disabled:opacity-50"
+                                            >
+                                                REJECT
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
                     <div>
                         <div className="flex items-center justify-between mb-4">
