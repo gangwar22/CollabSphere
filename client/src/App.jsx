@@ -98,7 +98,7 @@ function App() {
             <Router>
                 <div className="min-h-screen bg-dark-bg text-dark-text">
                     <Navbar user={user} setUser={setUser} />
-                    <main className="min-h-[calc(100vh-3.5rem)] py-8">
+                    <main className="min-h-[calc(100vh-3.5rem)] pb-8">
                         <Routes>
                             <Route path="/login" element={<Login setUser={setUser} />} />
                             <Route path="/register" element={<Register setUser={setUser} />} />

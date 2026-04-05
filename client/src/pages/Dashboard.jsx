@@ -2,9 +2,14 @@ import React, { useState, useEffect } from 'react';
 import API from '../api/axios';
 import ProjectCard from '../components/ProjectCard';
 import CreateProjectModal from '../components/CreateProjectModal';
-import { Layout, Plus, Search, Filter, BookOpen, Clock, Star, GitBranch } from 'lucide-react';
+import { 
+    Layout, Plus, Search, Filter, BookOpen, Clock, 
+    Star, GitBranch, Shield, Bell, ChevronRight, 
+    ExternalLink, Activity, Folder, Hash, Settings
+} from 'lucide-react';
 import Skeleton from '../components/Skeleton';
 import { useToast } from '../context/ToastContext';
+import { Link } from 'react-router-dom';
 
 const Dashboard = ({ user }) => {
     const [projects, setProjects] = useState([]);
@@ -111,215 +116,251 @@ const Dashboard = ({ user }) => {
     );
 
     return (
-        <div className="animate-fade-in max-w-[1400px] mx-auto px-4">
-            <div className="flex flex-col lg:flex-row gap-8">
-                {/* Sidebar */}
-                <div className="w-full lg:w-72 shrink-0 space-y-8">
-                    {/* User Profile Section */}
-                    <div className="flex flex-col items-center lg:items-start text-center lg:text-left pb-8 border-b border-dark-border">
-                        <div className="w-20 h-20 rounded-full bg-primary-500/10 border-2 border-primary-500/20 flex items-center justify-center mb-4 overflow-hidden shadow-lg border-accent/20">
-                            <span className="text-2xl font-bold text-primary-500">{user?.name?.charAt(0) || 'U'}</span>
-                        </div>
-                        <h1 className="text-xl font-bold text-white mb-1">{user?.name || 'User'}</h1>
-                        <p className="text-dark-muted text-xs font-medium mb-3">{user?.email || 'Email'}</p>
-                        <button 
-                            onClick={() => addToast('Edit profile feature coming soon!', 'info')}
-                            className="w-full github-btn-secondary !text-xs !py-1 flex items-center justify-center gap-1.5 hover:border-accent/40 hover:text-accent transition-all"
-                        >
-                            Edit profile
-                        </button>
-                    </div>
+        <div className="min-h-screen bg-[#0d1117] text-[#c9d1d9] selection:bg-blue-500/30">
+            {/* Main content starts immediately after Navbar */}
 
-                    {/* Invitations Section */}
-                    {invitations.length > 0 && (
-                        <div className="space-y-4">
-                            <h2 className="text-xs font-bold text-white flex items-center gap-2 uppercase tracking-widest pl-2">
-                                <Star size={14} className="text-yellow-500 fill-yellow-500/20" /> 
-                                Invitations ({invitations.length})
-                            </h2>
-                            <div className="space-y-3">
-                                {invitations.map(invite => (
-                                    <div key={invite._id} className="github-card p-4 bg-dark-card border-yellow-500/20 shadow-lg shadow-yellow-500/5">
-                                        <p className="text-[10px] text-dark-muted mb-2">
-                                            <span className="text-white font-bold">{invite.inviter.name}</span> invited you to:
-                                        </p>
-                                        <h3 className="text-xs font-bold text-primary-500 mb-3 truncate">{invite.project.projectName}</h3>
-                                        <div className="flex gap-2">
-                                            <button 
-                                                disabled={isIdLoading === invite._id}
-                                                onClick={() => handleInvitationResponse(invite._id, true)} 
-                                                className="flex-1 bg-primary-500 hover:bg-primary-400 text-dark-bg text-[9px] font-black py-1.5 rounded transition-all disabled:opacity-50"
-                                            >
-                                                {isIdLoading === invite._id ? '...' : 'ACCEPT'}
-                                            </button>
-                                            <button 
-                                                disabled={isIdLoading === invite._id}
-                                                onClick={() => handleInvitationResponse(invite._id, false)} 
-                                                className="flex-1 bg-dark-bg hover:bg-red-500/10 text-red-500 border border-red-500/30 text-[9px] font-black py-1.5 rounded transition-all disabled:opacity-50"
-                                            >
-                                                REJECT
-                                            </button>
+            <div className="container mx-auto px-4 sm:px-8 max-w-[1400px] pt-8 pb-32">
+                <div className="flex flex-col lg:flex-row gap-12">
+                    {/* Left Sidebar: Advanced Navigation */}
+                    <div className="w-full lg:w-[296px] shrink-0 pt-0 space-y-10">
+                        {/* User Identity Section */}
+                        <div className="flex flex-col items-center lg:items-start text-center lg:text-left">
+                            <div className="relative group mb-6">
+                                <div className="w-24 h-24 lg:w-32 lg:h-32 rounded-full bg-[#161b22] border-2 border-white/5 overflow-hidden shadow-2xl transition-transform group-hover:scale-[1.02] duration-500">
+                                    {user?.profilePicture ? (
+                                        <img src={user.profilePicture} className="w-full h-full object-cover" alt="" />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-tr from-[#161b22] to-[#0d1117]">
+                                            <span className="text-4xl font-black text-blue-500/10 italic">{(user?.name || '?').charAt(0)}</span>
                                         </div>
-                                    </div>
-                                ))}
+                                    )}
+                                </div>
+                                <button 
+                                    onClick={() => addToast('Profile settings available in profile page.', 'info')}
+                                    className="absolute bottom-1 right-1 bg-[#21262d] border border-white/10 p-1.5 rounded-full shadow-lg hover:bg-[#30363d] transition-colors"
+                                >
+                                    <Plus size={14} className="text-[#8b949e]" />
+                                </button>
                             </div>
-                        </div>
-                    )}
 
-                    <div>
-                        <div className="flex items-center justify-between mb-4">
-                            <h2 className="text-sm font-semibold text-dark-text flex items-center gap-2">
-                                <BookOpen size={16} className="text-dark-muted" />
-                                Top Repositories
-                            </h2>
+                            <div className="space-y-1 mb-6">
+                                <h1 className="text-2xl font-bold text-white leading-tight flex items-center gap-2">
+                                    {user?.name || 'Explorer'}
+                                    <Shield size={14} className="text-blue-500/40" />
+                                </h1>
+                                <p className="text-lg text-[#8b949e] font-light leading-snug">
+                                    @{user?.username || (user?.name || 'user').toLowerCase().replace(/\s+/g, '')}
+                                </p>
+                            </div>
+
                             <button 
-                                onClick={() => setIsModalOpen(true)}
-                                className="github-btn-primary !py-1 !px-2 flex items-center gap-1"
+                                onClick={() => addToast('Edit profile feature coming soon!', 'info')}
+                                className="w-full py-1.5 bg-[#21262d] border border-[#363b42] rounded-lg text-sm font-semibold text-[#c9d1d9] hover:bg-[#30363d] hover:border-[#8b949e] transition-all"
                             >
-                                <Plus size={14} />
-                                New
+                                Edit profile
                             </button>
                         </div>
-                        <div className="relative mb-4">
-                            <input
-                                type="text"
-                                placeholder="Find a repository..."
-                                className="w-full bg-dark-bg border border-dark-border rounded-md py-1 px-3 text-xs focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500 transition-all"
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                            />
-                        </div>
-                        <ul className="space-y-1">
-                            {loading ? (
-                                [1, 2, 3].map(i => <li key={i} className="h-6 bg-dark-card/50 rounded animate-pulse mb-2"></li>)
-                            ) : sidebarProjects.length > 0 ? (
-                                sidebarProjects.map(p => (
-                                    <li key={p._id}>
-                                        <a href={`/project/${p._id}`} className="flex items-center gap-2 text-xs text-dark-text hover:text-primary-500 hover:underline py-1 transition-all">
-                                            <div className="w-4 h-4 rounded bg-primary-500/10 flex items-center justify-center">
-                                                <GitBranch size={10} className="text-primary-500" />
+
+                        {/* Invitations: Premium UI */}
+                        {invitations.length > 0 && (
+                            <div className="space-y-4 pt-6 border-t border-white/5">
+                                <h2 className="text-xs font-black text-[#8b949e] flex items-center justify-between uppercase tracking-[0.2em]">
+                                    Direct Invitations
+                                    <span className="bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded-full text-[9px]">{invitations.length}</span>
+                                </h2>
+                                <div className="space-y-3">
+                                    {invitations.map(invite => (
+                                        <div key={invite._id} className="p-4 bg-[#161b22] border border-blue-500/20 rounded-xl shadow-lg relative overflow-hidden group/invite">
+                                            <div className="absolute top-0 right-0 p-2 opacity-5 pointer-events-none">
+                                                <Bell size={40} className="text-blue-500" />
                                             </div>
-                                            <span className="truncate font-medium">{user.name} / {p.projectName}</span>
-                                        </a>
-                                    </li>
-                                ))
-                            ) : (
-                                <li className="text-xs text-dark-muted italic py-1 px-2">No repositories match</li>
-                            )}
-                        </ul>
-                    </div>
+                                            <p className="text-[10px] font-bold text-[#8b949e] mb-2 uppercase tracking-tight">Collaboration Offer</p>
+                                            <h3 className="text-xs font-black text-white mb-4 truncate italic">{invite.project.projectName}</h3>
+                                            <div className="flex gap-2 relative z-10">
+                                                <button 
+                                                    disabled={isIdLoading === invite._id}
+                                                    onClick={() => handleInvitationResponse(invite._id, true)} 
+                                                    className="flex-1 bg-blue-600 hover:bg-blue-500 text-white text-[9px] font-black py-2 rounded-lg transition-all"
+                                                >
+                                                    {isIdLoading === invite._id ? 'SYNCING...' : 'ACCEPT'}
+                                                </button>
+                                                <button 
+                                                    disabled={isIdLoading === invite._id}
+                                                    onClick={() => handleInvitationResponse(invite._id, false)} 
+                                                    className="flex-1 bg-[#21262d] hover:bg-red-500/20 text-[#8b949e] hover:text-red-400 border border-white/5 text-[9px] font-black py-2 rounded-lg transition-all"
+                                                >
+                                                    REJECT
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
 
-                    <div className="pt-6 border-t border-dark-border">
-                        <h2 className="text-sm font-semibold text-dark-text flex items-center gap-2 mb-4">
-                            <Clock size={16} className="text-dark-muted" />
-                            Recent Activity
-                        </h2>
-                        <div className="space-y-3">
-                            {recentActivity.length > 0 ? (
-                                recentActivity.map(act => (
-                                    <div key={act.id} className="group cursor-default">
-                                        <p className="text-[11px] text-dark-text group-hover:text-primary-400 transition-colors">{act.text}</p>
-                                        <span className="text-[10px] text-dark-muted">{act.time}</span>
-                                    </div>
-                                ))
-                            ) : (
-                                <p className="text-xs text-dark-muted">No recent activity to show.</p>
-                            )}
+                        {/* Top Repositories: Enterprise Style */}
+                        <div className="space-y-6 pt-6 border-t border-white/5">
+                            <div className="flex items-center justify-between">
+                                <h2 className="text-xs font-black text-[#8b949e] flex items-center gap-2 uppercase tracking-[0.2em]">
+                                    <BookOpen size={14} /> My Repositories
+                                </h2>
+                                <button 
+                                    onClick={() => setIsModalOpen(true)}
+                                    className="bg-[#238636] hover:bg-[#2ea043] p-1.5 rounded-lg text-white transition-all shadow-lg shadow-green-950/20"
+                                >
+                                    <Plus size={14} />
+                                </button>
+                            </div>
+
+                            <div className="relative group/search">
+                                <Search size={14} className="absolute left-3 top-2.5 text-[#484f58] group-focus-within/search:text-blue-500 transition-colors" />
+                                <input
+                                    type="text"
+                                    placeholder="Find a repository..."
+                                    className="w-full bg-[#0d1117] border border-[#30363d] rounded-lg py-2 pl-9 pr-3 text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all placeholder:text-[#484f58]"
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                />
+                            </div>
+
+                            <div className="space-y-1">
+                                {loading ? (
+                                    [1, 2, 3].map(i => <div key={i} className="h-8 bg-[#161b22]/50 rounded-lg animate-pulse mb-2"></div>)
+                                ) : sidebarProjects.length > 0 ? (
+                                    sidebarProjects.map(p => (
+                                        <Link key={p._id} to={`/projects/public/${p._id}`} className="flex items-center justify-between group px-2 py-2 rounded-lg hover:bg-[#161b22] transition-colors">
+                                            <div className="flex items-center gap-3 overflow-hidden">
+                                                <GitBranch size={14} className="text-blue-400 opacity-40 shrink-0" />
+                                                <span className="text-[12px] font-bold text-[#c9d1d9] group-hover:text-blue-400 transition-colors truncate">
+                                                    {p.projectName}
+                                                </span>
+                                            </div>
+                                            <ChevronRight size={12} className="text-[#30363d] group-hover:text-[#8b949e] transition-colors" />
+                                        </Link>
+                                    ))
+                                ) : (
+                                    <p className="text-[11px] text-[#484f58] italic py-2 pl-2 border-l border-white/5">Manifest empty...</p>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Recent Performance/Activity */}
+                        <div className="pt-8 border-t border-white/5">
+                            <h2 className="text-xs font-black text-[#8b949e] flex items-center gap-2 mb-6 uppercase tracking-[0.2em]">
+                                <Activity size={14} className="text-green-500" /> Pulse Flow
+                            </h2>
+                            <div className="space-y-6">
+                                {recentActivity.length > 0 ? (
+                                    recentActivity.map(act => (
+                                        <div key={act.id} className="relative pl-6 border-l border-white/5 pb-2">
+                                            <div className="absolute top-0 -left-[4.5px] w-2 h-2 rounded-full bg-[#30363d] border border-[#0d1117]"></div>
+                                            <p className="text-xs font-bold text-[#c9d1d9] mb-1">{act.text}</p>
+                                            <span className="text-[10px] text-[#8b949e] uppercase font-black tracking-widest">{act.time}</span>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="py-10 text-center opacity-30 italic text-xs">Awaiting signals...</div>
+                                )}
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                {/* Main Content */}
-                <div className="flex-1">
-                    <div className="flex items-center justify-between mb-6 pb-4 border-b border-dark-border overflow-x-auto scroller-hidden">
-                        <nav className="flex space-x-6 min-w-max">
+                    {/* Main Content Area */}
+                    <div className="flex-1 pt-0 lg:pt-0">
+                        {/* Tab System: GitHub 2026 Edition */}
+                        <div className="flex items-center gap-8 border-b border-white/5 mb-8 text-sm overflow-x-auto scroller-hidden">
                             <button 
                                 onClick={() => setActiveTab('overview')}
-                                className={`text-sm font-semibold pb-4 flex items-center gap-2 transition-all ${activeTab === 'overview' ? 'text-dark-text border-b-2 border-accent' : 'text-dark-muted hover:text-dark-text'}`}
+                                className={`flex items-center gap-2 pb-4 transition-all whitespace-nowrap ${activeTab === 'overview' ? 'border-b-2 border-[#f78166] text-white font-black' : 'text-[#8b949e] hover:text-white'}`}
                             >
-                                <Layout size={16} />
-                                Overview
+                                <Layout size={16} /> Overview
                             </button>
                             <button 
                                 onClick={() => setActiveTab('repositories')}
-                                className={`text-sm font-medium pb-4 flex items-center gap-2 transition-all ${activeTab === 'repositories' ? 'text-dark-text border-b-2 border-accent' : 'text-dark-muted hover:text-dark-text'}`}
+                                className={`flex items-center gap-2 pb-4 transition-all whitespace-nowrap ${activeTab === 'repositories' ? 'border-b-2 border-[#f78166] text-white font-black' : 'text-[#8b949e] hover:text-white'}`}
                             >
-                                <GitBranch size={16} />
-                                Repositories
-                                <span className="bg-dark-border text-dark-text px-1.5 py-0.5 rounded-full text-[10px]">{projects.length}</span>
+                                <GitBranch size={16} /> Repositories 
+                                <span className="bg-[#1d2127] border border-white/10 px-2 py-0.5 rounded-full text-[10px] font-black">{projects.length}</span>
                             </button>
                             <button 
                                 onClick={() => setActiveTab('stars')}
-                                className={`text-sm font-medium pb-4 flex items-center gap-2 transition-all ${activeTab === 'stars' ? 'text-dark-text border-b-2 border-accent' : 'text-dark-muted hover:text-dark-text'}`}
+                                className={`flex items-center gap-2 pb-4 transition-all whitespace-nowrap ${activeTab === 'stars' ? 'border-b-2 border-[#f78166] text-white font-black' : 'text-[#8b949e] hover:text-white'}`}
                             >
-                                <Star size={16} />
-                                Stars
-                                <span className="bg-dark-border text-dark-text px-1.5 py-0.5 rounded-full text-[10px]">0</span>
+                                <Star size={16} /> Workflow
+                                <span className="bg-[#1d2127] border border-white/10 px-2 py-0.5 rounded-full text-[10px] font-black">0</span>
                             </button>
-                        </nav>
-                    </div>
-
-                    {loading ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {[1, 2, 3, 4].map(i => (
-                                <div key={i} className="github-card p-4 h-32 flex flex-col justify-between">
-                                    <div>
-                                        <Skeleton className="h-5 w-3/4 mb-2" />
-                                        <Skeleton className="h-3 w-full" />
-                                    </div>
-                                    <Skeleton className="h-3 w-20" />
-                                </div>
-                            ))}
                         </div>
-                    ) : (
-                        <div className="scroller-container">
-                            {activeTab === 'overview' && (
-                                filteredProjects.length > 0 ? (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-slide-up">
-                                        {filteredProjects.map(project => (
-                                            <ProjectCard 
-                                                key={project._id} 
-                                                project={project} 
-                                                onDelete={() => handleDeleteProject(project._id)}
-                                                currentUser={user}
-                                            />
-                                        ))}
+
+                        {loading ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {[1, 2, 3, 4].map(i => (
+                                    <div key={i} className="p-6 bg-[#0d1117] border border-[#30363d] rounded-xl h-44 animate-animation-pulse">
+                                        <div className="w-1/3 h-5 bg-[#161b22] rounded-md mb-4"></div>
+                                        <div className="w-full h-8 bg-[#161b22] rounded-md mb-6"></div>
+                                        <div className="w-1/4 h-3 bg-[#161b22] rounded-md"></div>
                                     </div>
-                                ) : renderEmptyState("Build your first project", "Repositories contain all your project files, including the revision history.", "Create repository")
-                            )}
-                            
-                            {activeTab === 'repositories' && (
-                                filteredProjects.length > 0 ? (
-                                    <div className="space-y-4 animate-slide-up">
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+                                {activeTab === 'overview' && (
+                                    filteredProjects.length > 0 ? (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            {filteredProjects.map(project => (
+                                                <ProjectCard 
+                                                    key={project._id} 
+                                                    project={project} 
+                                                    onDelete={() => handleDeleteProject(project._id)}
+                                                    currentUser={user}
+                                                />
+                                            ))}
+                                        </div>
+                                    ) : renderEmptyState("Initialize Architecture", "Repositories contain all your project files, encrypted and synced in real-time.", "New Project")
+                                )}
+                                
+                                {activeTab === 'repositories' && (
+                                    <div className="space-y-2">
                                         {filteredProjects.map(project => (
-                                            <div key={project._id} className="github-card p-4 flex items-center justify-between group hover:bg-dark-card transition-all">
-                                                <div>
-                                                    <a href={`/project/${project._id}`} className="text-primary-500 font-bold hover:underline mb-1 inline-block">{project.projectName}</a>
-                                                    <p className="text-xs text-dark-muted truncate max-w-md">{project.description || 'No description provided'}</p>
-                                                    <div className="flex items-center gap-3 mt-2 text-[10px] text-dark-muted">
-                                                        <span className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-yellow-500"></div> JavaScript</span>
-                                                        <span>Updated {new Date(project.updatedAt).toLocaleDateString()}</span>
+                                            <div key={project._id} className="p-5 bg-gradient-to-tr from-transparent to-white/[0.01] border border-[#30363d] rounded-xl flex items-center justify-between group hover:border-blue-500/20 transition-all shadow-sm">
+                                                <div className="flex-1 overflow-hidden">
+                                                    <div className="flex items-center gap-3 mb-1">
+                                                        <Folder size={16} className="text-[#8b949e] shrink-0" />
+                                                        <Link to={`/projects/public/${project._id}`} className="text-base font-black text-blue-400 hover:underline truncate italic">
+                                                            {project.projectName}
+                                                        </Link>
+                                                        <span className="px-2 py-0.5 rounded-full bg-[#121d2f]/50 border border-blue-500/20 text-[9px] font-black uppercase text-blue-300">Active</span>
+                                                    </div>
+                                                    <p className="text-[11px] text-[#8b949e] truncate leading-relaxed">
+                                                        {project.description || 'Project metadata currently being synchronized...'}
+                                                    </p>
+                                                    <div className="mt-3 flex items-center gap-4 text-[11px] font-black text-[#8b949e] uppercase tracking-tighter">
+                                                        <span className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-[#f1e05a]"></div> JS</span>
+                                                        <span className="flex items-center gap-1"><Star size={12} /> 0</span>
+                                                        <span className="opacity-40 italic">Updated {new Date(project.createdAt).toLocaleDateString()}</span>
                                                     </div>
                                                 </div>
-                                                <button onClick={() => handleDeleteProject(project._id)} className="opacity-0 group-hover:opacity-100 p-1.5 text-dark-muted hover:text-red-500 transition-all">
-                                                    <Clock size={16} />
-                                                </button>
+                                                <div className="flex gap-2">
+                                                     <button 
+                                                        onClick={() => handleDeleteProject(project._id)}
+                                                        className="p-2.5 rounded-lg bg-[#21262d] border border-white/5 text-[#8b949e] hover:text-red-400 hover:bg-red-500/10 transition-all opacity-0 group-hover:opacity-100"
+                                                    >
+                                                        <Hash size={14} />
+                                                    </button>
+                                                </div>
                                             </div>
                                         ))}
                                     </div>
-                                ) : renderEmptyState("No repositories found", "Try adjusting your search filters.")
-                            )}
-                            
-                            {activeTab === 'stars' && renderEmptyState("You don't have any stars yet", "Stars help you keep track of repositories you find interesting.")}
-                        </div>
-                    )}
+                                )}
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
 
-            <CreateProjectModal
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                onCreate={handleCreateProject}
+            <CreateProjectModal 
+                isOpen={isModalOpen} 
+                onClose={() => setIsModalOpen(false)} 
+                onCreate={handleCreateProject} 
             />
         </div>
     );

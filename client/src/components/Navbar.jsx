@@ -271,57 +271,110 @@ const Navbar = ({ user, setUser }) => {
 
                             <div className="flex items-center space-x-3 ml-2 pl-4 border-l border-dark-border relative" ref={profileMenuRef}>
                                 <div 
-                                    className="flex items-center space-x-2 cursor-pointer group"
+                                    className="px-2 py-1.5 rounded-xl hover:bg-white/5 border border-transparent hover:border-[#30363d] transition-all duration-300 flex items-center space-x-2 cursor-pointer group relative overflow-hidden"
                                     onClick={() => setShowProfileMenu(!showProfileMenu)}
                                 >
-                                    <div className="w-7 h-7 rounded-full bg-primary-500/10 border border-primary-500/20 flex items-center justify-center overflow-hidden">
-                                        {user.profilePicture ? (
-                                            <img src={user.profilePicture} alt={user.name} className="w-full h-full object-cover" />
-                                        ) : (
-                                            <UserIcon size={14} className="text-primary-500" />
-                                        )}
+                                    <div className="absolute inset-0 bg-gradient-to-r from-primary-500/0 via-primary-500/5 to-primary-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                                    <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-primary-600 to-primary-400 p-[1.5px] shadow-lg shadow-primary-500/10 group-hover:shadow-primary-500/20 transition-all duration-300 group-hover:scale-105">
+                                        <div className="w-full h-full rounded-[6.5px] bg-[#0d1117] flex items-center justify-center overflow-hidden">
+                                            {user.profilePicture ? (
+                                                <img src={user.profilePicture} alt={user.name} className="w-full h-full object-cover shrink-0" />
+                                            ) : (
+                                                <UserIcon size={16} className="text-primary-500" />
+                                            )}
+                                        </div>
                                     </div>
-                                    <div className="hidden lg:flex items-center gap-1">
-                                        <span className="text-xs font-semibold text-dark-text group-hover:text-primary-500 transition-colors uppercase tracking-tight">{user.name}</span>
-                                        <ChevronDown size={12} className={`text-dark-muted transition-transform ${showProfileMenu ? 'rotate-180' : ''}`} />
+                                    <div className="hidden lg:flex flex-col items-start leading-none gap-0.5">
+                                        <span className="text-[11px] font-black text-white group-hover:text-primary-400 transition-colors uppercase tracking-tight">{user.name}</span>
+                                        <div className="flex items-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
+                                            <span className="text-[9px] font-bold text-dark-muted">LVL 5 ARTIST</span>
+                                            <ChevronDown size={10} className={`text-primary-500 transition-transform duration-300 ${showProfileMenu ? 'rotate-180' : ''}`} />
+                                        </div>
                                     </div>
                                 </div>
 
                                 {showProfileMenu && (
-                                    <div className="absolute right-0 top-full mt-2 w-48 bg-dark-card border border-dark-border rounded-lg shadow-2xl py-1 z-[70] animate-in fade-in slide-in-from-top-2">
-                                        <div className="px-4 py-2 border-b border-dark-border bg-dark-bg/20">
-                                            <p className="text-[10px] text-dark-muted font-bold uppercase tracking-widest">Signed in as</p>
-                                            <p className="text-xs font-bold text-white truncate">{user.email}</p>
+                                    <div className="absolute right-0 top-full mt-2 w-64 bg-[#0d1117]/95 backdrop-blur-xl border border-[#30363d] rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] py-2 z-[70] animate-in fade-in zoom-in-95 duration-200">
+                                        <div className="px-5 py-4 mb-2 bg-gradient-to-br from-primary-500/10 to-transparent rounded-t-2xl border-b border-[#30363d]/50">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-primary-600 to-primary-400 p-[2px] shadow-lg shadow-primary-500/20">
+                                                    <div className="w-full h-full rounded-[14px] bg-[#0d1117] flex items-center justify-center overflow-hidden">
+                                                        {user.profilePicture ? (
+                                                            <img src={user.profilePicture} alt={user.name} className="w-full h-full object-cover shrink-0" />
+                                                        ) : (
+                                                            <UserIcon size={20} className="text-primary-500" />
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <p className="text-sm font-black text-white truncate leading-none mb-1">{user.name}</p>
+                                                    <p className="text-[10px] text-dark-muted font-medium truncate opacity-70 italic">{user.email}</p>
+                                                </div>
+                                            </div>
+                                            <div className="mt-3 flex gap-1.5">
+                                                <div className="h-1.5 flex-1 bg-primary-500/20 rounded-full overflow-hidden">
+                                                    <div className="h-full bg-primary-500 w-[65%] rounded-full shadow-[0_0_8px_rgba(var(--primary-500),0.4)]"></div>
+                                                </div>
+                                                <span className="text-[8px] text-primary-400 font-bold leading-none">PRO LVL 5</span>
+                                            </div>
                                         </div>
                                         
-                                        <button 
-                                            onClick={() => {
-                                                navigate(`/profile/${user._id}`);
-                                                setShowProfileMenu(false);
-                                            }}
-                                            className="w-full flex items-center gap-3 px-4 py-2 text-xs text-dark-text hover:bg-dark-bg hover:text-primary-500 transition-all text-left"
-                                        >
-                                            <UserIcon size={14} /> My Profile
-                                        </button>
+                                        <div className="px-2 space-y-0.5">
+                                            <button 
+                                                onClick={() => {
+                                                    navigate(`/profile/${user._id}`);
+                                                    setShowProfileMenu(false);
+                                                }}
+                                                className="w-full flex items-center justify-between px-3 py-2.5 text-xs text-dark-text hover:bg-white/5 hover:text-primary-400 rounded-xl transition-all duration-200 group/item"
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <div className="p-1.5 rounded-lg bg-dark-bg border border-[#30363d] group-hover/item:border-primary-500/30 group-hover/item:bg-primary-500/5 transition-colors">
+                                                        <UserIcon size={14} className="group-hover/item:scale-110 transition-transform" />
+                                                    </div>
+                                                    <span className="font-semibold">My Profile</span>
+                                                </div>
+                                                <div className="w-1.5 h-1.5 rounded-full bg-primary-500 opacity-0 group-hover/item:opacity-100 transition-opacity"></div>
+                                            </button>
 
-                                        <button 
-                                            onClick={() => {
-                                                setShowEditModal(true);
-                                                setShowProfileMenu(false);
-                                            }}
-                                            className="w-full flex items-center gap-3 px-4 py-2 text-xs text-dark-text hover:bg-dark-bg hover:text-primary-500 transition-all text-left"
-                                        >
-                                            <Settings size={14} /> Edit Profile
-                                        </button>
+                                            <button 
+                                                onClick={() => {
+                                                    setShowEditModal(true);
+                                                    setShowProfileMenu(false);
+                                                }}
+                                                className="w-full flex items-center justify-between px-3 py-2.5 text-xs text-dark-text hover:bg-white/5 hover:text-blue-400 rounded-xl transition-all duration-200 group/item"
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <div className="p-1.5 rounded-lg bg-dark-bg border border-[#30363d] group-hover/item:border-blue-500/30 group-hover/item:bg-blue-500/5 transition-colors">
+                                                        <Settings size={14} className="group-hover/item:rotate-90 transition-transform duration-500" />
+                                                    </div>
+                                                    <span className="font-semibold">Account Settings</span>
+                                                </div>
+                                            </button>
 
-                                        <div className="border-t border-dark-border my-1"></div>
+                                            <div className="px-3 py-2 flex items-center gap-2 mt-1">
+                                                <div className="flex-1 h-[1px] bg-gradient-to-r from-transparent via-[#30363d] to-transparent"></div>
+                                                <span className="text-[9px] font-black text-dark-muted/40 uppercase tracking-[0.2em]">Session</span>
+                                                <div className="flex-1 h-[1px] bg-gradient-to-r from-transparent via-[#30363d] to-transparent"></div>
+                                            </div>
+
+                                            <button
+                                                onClick={handleLogout}
+                                                className="w-full flex items-center gap-3 px-3 py-2.5 text-xs text-red-400/80 hover:bg-red-500/10 hover:text-red-400 rounded-xl transition-all duration-200 group/item"
+                                            >
+                                                <div className="p-1.5 rounded-lg bg-dark-bg border border-[#30363d] group-hover/item:border-red-500/30 transition-colors">
+                                                    <LogOut size={14} className="group-hover/item:-translate-x-0.5 transition-transform" />
+                                                </div>
+                                                <span className="font-bold">Sign Out</span>
+                                            </button>
+                                        </div>
                                         
-                                        <button
-                                            onClick={handleLogout}
-                                            className="w-full flex items-center gap-3 px-4 py-2 text-xs text-red-500 hover:bg-red-500/10 transition-all text-left"
-                                        >
-                                            <LogOut size={14} /> Logout
-                                        </button>
+                                        <div className="mt-2 px-5 py-2 border-t border-[#30363d]/30 flex justify-between items-center bg-[#0d1117]">
+                                            <span className="text-[9px] text-dark-muted font-medium">v1.2.4-stable</span>
+                                            <div className="flex gap-1">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
+                                                <span className="text-[9px] text-green-500/80 font-bold uppercase">Online</span>
+                                            </div>
+                                        </div>
                                     </div>
                                 )}
                             </div>

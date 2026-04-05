@@ -205,7 +205,7 @@ const AdminDashboard = () => {
     );
 
     return (
-        <div className="p-8 max-w-7xl mx-auto animate-fade-in pb-20">
+        <div className="pt-16 p-8 max-w-7xl mx-auto animate-fade-in pb-20">
             {/* Header Section */}
             <div className="flex flex-col md:flex-row md:items-center justify-between mb-12 gap-8">
                 <div className="flex items-center space-x-6">

@@ -219,7 +219,7 @@ const ProjectDetails = () => {
     );
 
     return (
-        <div className="animate-fade-in relative max-w-[1280px] mx-auto px-4 pb-20">
+        <div className="animate-fade-in relative max-w-[1280px] mx-auto px-4 pt-8 pb-20">
             {/* GitHub-style Breadcrumb Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
                 <div className="flex items-center gap-2 text-xl">
