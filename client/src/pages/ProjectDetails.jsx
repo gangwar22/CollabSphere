@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import API from '../api/axios';
+import { BASE_URL } from '../config';
 import NoteEditor from '../components/NoteEditor';
 import FileUploader from '../components/FileUploader';
 import AIExplainPanel from '../components/AIExplainPanel';
@@ -452,14 +453,14 @@ const ProjectDetails = () => {
                                         {previewFile.fileName.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp)$/) ? (
                                             <div className="flex items-center justify-center h-full p-4">
                                                 <img 
-                                                    src={previewFile.fileUrl.startsWith('http') ? previewFile.fileUrl : `http://localhost:5000${previewFile.fileUrl}`} 
+                                                    src={previewFile.fileUrl.startsWith('http') ? previewFile.fileUrl : `${BASE_URL}${previewFile.fileUrl}`} 
                                                     alt={previewFile.fileName} 
                                                     className="max-w-full max-h-full object-contain shadow-2xl rounded-lg" 
                                                 />
                                             </div>
                                         ) : previewFile.fileName.toLowerCase().endsWith('.pdf') ? (
                                             <iframe 
-                                                src={`${previewFile.fileUrl.startsWith('http') ? previewFile.fileUrl : `http://localhost:5000${previewFile.fileUrl}`}#toolbar=0`} 
+                                                src={`${previewFile.fileUrl.startsWith('http') ? previewFile.fileUrl : `${BASE_URL}${previewFile.fileUrl}`}#toolbar=0`} 
                                                 className="w-full h-full border-none bg-white font-display" 
                                                 title="File Preview"
                                             />
@@ -471,7 +472,7 @@ const ProjectDetails = () => {
                                          <p className="text-[10px] text-dark-muted uppercase font-bold tracking-widest hidden md:block">CollabSphere Code Preview</p>
                                          <div className="flex items-center space-x-6">
                                             <a 
-                                                href={previewFile.fileUrl.startsWith('http') ? previewFile.fileUrl : `http://localhost:5000${previewFile.fileUrl}`} 
+                                                href={previewFile.fileUrl.startsWith('http') ? previewFile.fileUrl : `${BASE_URL}${previewFile.fileUrl}`} 
                                                 download 
                                                 target="_blank" 
                                                 rel="noreferrer" 

@@ -16,7 +16,7 @@ const app = express();
 
 // Middleware
 app.use(cors({
-    origin: process.env.CLIENT_URL || '*',
+    origin: process.env.CLIENT_URL || true,
     credentials: true
 }));
 app.use(express.json());
@@ -43,9 +43,19 @@ app.use('/api/gemini', require('./routes/geminiRoutes'));
 app.use('/api/analytics', require('./routes/analyticsRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
 
-app.get('/', (req, res) => {
-    res.send('CollabSphere API is running...');
-});
+// Serve Frontend in Production
+if (process.env.NODE_ENV === 'production') {
+    app.use(express.static(path.join(__dirname, '../client/dist')));
+
+    // Use a regular expression to handle all non-API paths for React Router
+    app.get(/^(?!\/api).+/, (req, res) => {
+        res.sendFile(path.resolve(__dirname, '../', 'client', 'dist', 'index.html'));
+    });
+} else {
+    app.get('/', (req, res) => {
+        res.send('CollabSphere API is running...');
+    });
+}
 
 // Use error middleware
 app.use(notFound);

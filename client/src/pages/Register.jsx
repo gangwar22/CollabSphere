@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Code, ArrowRight } from 'lucide-react';
+import { Code, ArrowRight, Github } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 import Spinner from '../components/Spinner';
 import API from '../api/axios';
+import { BASE_URL } from '../config';
 
 const Register = ({ setUser }) => {
     const [formData, setFormData] = useState({ name: '', email: '', password: '' });
@@ -25,7 +26,8 @@ const Register = ({ setUser }) => {
             addToast('Account created successfully!', 'success');
             navigate('/dashboard');
         } catch (err) {
-            const msg = err.response?.data?.message || 'Registration failed';
+            console.error('Registration error detail:', err.response?.data);
+            const msg = err.response?.data?.message || err.response?.data?.error || 'Registration failed. Please check your details and try again.';
             setError(msg);
             addToast(msg, 'error');
         } finally {
@@ -105,7 +107,7 @@ const Register = ({ setUser }) => {
 
                         <div className="grid grid-cols-2 gap-3">
                             <button 
-                                onClick={() => window.location.href = 'http://localhost:5000/api/users/google'}
+                                onClick={() => window.location.href = `${BASE_URL}/api/users/google`}
                                 type="button" 
                                 className="github-btn-secondary !py-2 flex items-center justify-center gap-2"
                             >
@@ -113,7 +115,7 @@ const Register = ({ setUser }) => {
                                 <span className="text-xs">Google</span>
                             </button>
                             <button 
-                                onClick={() => window.location.href = 'http://localhost:5000/api/users/github'}
+                                onClick={() => window.location.href = `${BASE_URL}/api/users/github`}
                                 type="button" 
                                 className="github-btn-secondary !py-2 flex items-center justify-center gap-2"
                             >

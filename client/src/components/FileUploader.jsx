@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import API from '../api/axios';
+import { BASE_URL } from '../config';
 import { Upload, File, Image, Trash2, Loader, X } from 'lucide-react';
 
 const FileUploader = ({ projectId, files, onUploadSuccess, showUploadOnly = false }) => {
@@ -119,7 +120,7 @@ const FileUploader = ({ projectId, files, onUploadSuccess, showUploadOnly = fals
                                     </button>
                                 ) : (
                                     <a
-                                        href={file.fileUrl.startsWith('http') ? file.fileUrl : `http://localhost:5000${file.fileUrl}`}
+                                        href={file.fileUrl.startsWith('http') ? file.fileUrl : `${BASE_URL}${file.fileUrl}`}
                                         target="_blank"
                                         rel="noreferrer"
                                         className="bg-dark-border text-dark-muted px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-dark-muted hover:text-white transition-all"
@@ -149,13 +150,13 @@ const FileUploader = ({ projectId, files, onUploadSuccess, showUploadOnly = fals
                         <div className="flex-1 bg-black/20 overflow-auto flex items-center justify-center">
                             {previewFile.fileName.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp)$/) ? (
                                 <img 
-                                    src={previewFile.fileUrl.startsWith('http') ? previewFile.fileUrl : `http://localhost:5000${previewFile.fileUrl}`} 
+                                    src={previewFile.fileUrl.startsWith('http') ? previewFile.fileUrl : `${BASE_URL}${previewFile.fileUrl}`} 
                                     alt={previewFile.fileName} 
                                     className="max-w-full max-h-full object-contain" 
                                 />
                             ) : previewFile.fileName.toLowerCase().endsWith('.pdf') ? (
                                 <iframe 
-                                    src={`${previewFile.fileUrl.startsWith('http') ? previewFile.fileUrl : `http://localhost:5000${previewFile.fileUrl}`}#toolbar=0`} 
+                                    src={`${previewFile.fileUrl.startsWith('http') ? previewFile.fileUrl : `${BASE_URL}${previewFile.fileUrl}`}#toolbar=0`} 
                                     className="w-full h-full border-none bg-white font-display" 
                                     title="File Preview"
                                 />
@@ -177,7 +178,7 @@ const FileUploader = ({ projectId, files, onUploadSuccess, showUploadOnly = fals
                                     <File size={64} className="text-primary-400 mx-auto mb-4" />
                                     <p className="text-white font-bold text-xl mb-4">Preview not available for this format</p>
                                     <a 
-                                        href={previewFile.fileUrl.startsWith('http') ? previewFile.fileUrl : `http://localhost:5000${previewFile.fileUrl}`} 
+                                        href={previewFile.fileUrl.startsWith('http') ? previewFile.fileUrl : `${BASE_URL}${previewFile.fileUrl}`} 
                                         target="_blank" 
                                         rel="noreferrer" 
                                         className="inline-block bg-primary-600 hover:bg-primary-700 text-white px-8 py-3 rounded-xl font-bold transition-all shadow-lg hover:shadow-primary-500/20"
@@ -191,7 +192,7 @@ const FileUploader = ({ projectId, files, onUploadSuccess, showUploadOnly = fals
                              <p className="text-xs text-dark-muted uppercase font-bold tracking-widest">CollabSphere File Viewer</p>
                              <div className="flex items-center space-x-6">
                                 <a 
-                                    href={previewFile.fileUrl.startsWith('http') ? previewFile.fileUrl : `http://localhost:5000${previewFile.fileUrl}`} 
+                                    href={previewFile.fileUrl.startsWith('http') ? previewFile.fileUrl : `${BASE_URL}${previewFile.fileUrl}`} 
                                     download 
                                     target="_blank" 
                                     rel="noreferrer" 

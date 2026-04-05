@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { LogOut, Code, User as UserIcon, Search, Bell, Plus, ChevronDown, ShieldCheck, Check, X as XIcon, UserPlus, Settings, User } from 'lucide-react';
+import { LogOut, Code, User as UserIcon, Search, Bell, Plus, ChevronDown, ShieldCheck, Check, X as XIcon, UserPlus, Settings } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 import API from '../api/axios';
 import EditProfileModal from './EditProfileModal';
@@ -301,7 +301,7 @@ const Navbar = ({ user, setUser }) => {
                                             }}
                                             className="w-full flex items-center gap-3 px-4 py-2 text-xs text-dark-text hover:bg-dark-bg hover:text-primary-500 transition-all text-left"
                                         >
-                                            <User size={14} /> My Profile
+                                            <UserIcon size={14} /> My Profile
                                         </button>
 
                                         <button 

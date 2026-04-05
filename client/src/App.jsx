@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { API_URL } from './config';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
@@ -15,37 +16,47 @@ function App() {
     const [user, setUser] = useState(null);
 
     useEffect(() => {
-        const savedUser = localStorage.getItem('user');
         const token = localStorage.getItem('token');
+        const savedUser = localStorage.getItem('user');
 
-        if (savedUser) {
-            try {
-                setUser(JSON.parse(savedUser));
-            } catch (e) {
-                console.error('Failed to parse saved user', e);
-                localStorage.removeItem('user');
-            }
-        } else if (token) {
-            // Fetch profile if token exists but no user info
+        // Always check profile if we have a token, to ensure it's still valid
+        if (token) {
             const fetchProfile = async () => {
                 try {
-                    const response = await fetch('http://localhost:5000/api/users/profile', {
+                    const response = await fetch(`${API_URL}/users/profile`, {
                         headers: {
                             Authorization: `Bearer ${token}`,
                         },
                     });
                     const data = await response.json();
+                    
                     if (response.ok) {
                         localStorage.setItem('user', JSON.stringify(data));
                         setUser(data);
                     } else {
+                        // If token is invalid, clear everything
                         localStorage.removeItem('token');
+                        localStorage.removeItem('user');
+                        setUser(null);
                     }
                 } catch (err) {
-                    console.error('Failed to fetch profile', err);
+                    console.error('Failed to verify session', err);
+                    // If network fails but we have a saved user, we can keep it as a fallback
+                    // but usually, it's better to stay safe
+                    if (savedUser) {
+                        try {
+                            setUser(JSON.parse(savedUser));
+                        } catch (e) {
+                            setUser(null);
+                        }
+                    }
                 }
             };
             fetchProfile();
+        } else {
+            // No token, no user
+            setUser(null);
+            localStorage.removeItem('user');
         }
     }, []);
 

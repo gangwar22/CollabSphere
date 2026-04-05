@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import API from '../api/axios';
+import { BASE_URL } from '../config';
 import { Globe, Code, ArrowRight, Loader } from 'lucide-react';
 
 const PublicProject = () => {
@@ -123,7 +124,7 @@ const PublicProject = () => {
                                     <p className="text-xs font-bold text-white truncate w-full mb-1">{file.fileName}</p>
                                     <p className="text-[10px] text-dark-muted uppercase tracking-widest mb-4">{file.uploadedBy?.name}</p>
                                     <a
-                                        href={`http://localhost:5000${file.fileUrl}`}
+                                        href={`${BASE_URL}${file.fileUrl}`}
                                         target="_blank"
                                         rel="noreferrer"
                                         className="text-[10px] font-black text-primary-500 hover:text-white transition-colors"

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import API from '../api/axios';
+import { BASE_URL } from '../config';
 import { Code, ArrowRight, Github } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 import Spinner from '../components/Spinner';
@@ -13,20 +14,12 @@ const Login = ({ setUser }) => {
     const { addToast } = useToast();
 
     useEffect(() => {
-        const tokenToken = localStorage.getItem('token');
-        if (tokenToken && !localStorage.getItem('user')) {
-            const fetchProfile = async () => {
-                try {
-                    const { data } = await API.get('/users/profile');
-                    localStorage.setItem('user', JSON.stringify(data));
-                    setUser(data);
-                } catch (err) {
-                    console.error('Failed to fetch profile', err);
-                }
-            };
-            fetchProfile();
+        // If we already have a user, just move to dashboard
+        const token = localStorage.getItem('token');
+        if (token && localStorage.getItem('user')) {
+             navigate('/dashboard');
         }
-    }, [setUser]);
+    }, [navigate]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -110,7 +103,7 @@ const Login = ({ setUser }) => {
 
                         <div className="grid grid-cols-2 gap-3">
                             <button 
-                                onClick={() => window.location.href = 'http://localhost:5000/api/users/google'}
+                                onClick={() => window.location.href = `${BASE_URL}/api/users/google`}
                                 type="button" 
                                 className="github-btn-secondary !py-2 flex items-center justify-center gap-2"
                             >
@@ -118,7 +111,7 @@ const Login = ({ setUser }) => {
                                 <span className="text-xs">Google</span>
                             </button>
                             <button 
-                                onClick={() => window.location.href = 'http://localhost:5000/api/users/github'}
+                                onClick={() => window.location.href = `${BASE_URL}/api/users/github`}
                                 type="button" 
                                 className="github-btn-secondary !py-2 flex items-center justify-center gap-2"
                             >
