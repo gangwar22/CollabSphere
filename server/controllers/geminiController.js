@@ -3,11 +3,49 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
+// Helper function to try multiple models in order of priority
+const generateWithFallback = async (prompt) => {
+    const modelsToTry = [
+        'gemini-flash-latest',
+        'gemini-pro-latest',
+        'gemini-1.5-flash-latest',
+        'gemini-2.0-flash',
+        'gemini-pro'
+    ];
+
+    let lastError = null;
+
+    for (const modelName of modelsToTry) {
+        try {
+            console.log(`Attempting generation with model: ${modelName}`);
+            const model = genAI.getGenerativeModel({ model: modelName });
+            const result = await model.generateContent(prompt);
+            const response = await result.response;
+            
+            if (response && response.candidates && response.candidates.length > 0) {
+                const text = response.text();
+                if (text) return text;
+            }
+        } catch (error) {
+            console.warn(`Model ${modelName} failed: ${error.message}`);
+            lastError = error;
+            // Continue to next model if 404 or 429
+            if (error.message.includes('404') || error.message.includes('429')) {
+                continue;
+            } else {
+                throw error; // Rethrow if it's a different kind of error
+            }
+        }
+    }
+
+    throw lastError || new Error('All Gemini models failed to generate content');
+};
+
 // @desc    Explain code or notes
 // @route   POST /api/gemini/explain
 // @access  Private
 const explainContent = asyncHandler(async (req, res) => {
-    const { content, type } = req.body; // type: 'code' or 'note'
+    const { content, type } = req.body;
 
     if (!content) {
         res.status(400);
@@ -15,22 +53,8 @@ const explainContent = asyncHandler(async (req, res) => {
     }
 
     try {
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
         const prompt = `Explain the following ${type || 'content'} in a clear, concise way for a developer:\n\n${content}`;
-
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        
-        if (!response || !response.candidates || response.candidates.length === 0) {
-            throw new Error('No response candidates from Gemini API');
-        }
-
-        const text = response.text();
-
-        if (!text) {
-            throw new Error('Empty response text from Gemini');
-        }
-
+        const text = await generateWithFallback(prompt);
         res.status(200).json({ explanation: text });
     } catch (error) {
         console.error('Gemini Explain Error:', error);
@@ -51,22 +75,8 @@ const generateDocs = asyncHandler(async (req, res) => {
     }
 
     try {
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
         const prompt = `Generate a professional markdown documentation for the following code:\n\n${code}`;
-
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        
-        if (!response || !response.candidates || response.candidates.length === 0) {
-            throw new Error('No response candidates from Gemini API');
-        }
-
-        const text = response.text();
-
-        if (!text) {
-            throw new Error('Empty response text from Gemini');
-        }
-
+        const text = await generateWithFallback(prompt);
         res.status(200).json({ documentation: text });
     } catch (error) {
         console.error('Gemini Docs Error:', error);
@@ -87,22 +97,8 @@ const generateReadme = asyncHandler(async (req, res) => {
     }
 
     try {
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
         const prompt = `Create a comprehensive README.md file for a project named "${projectName}" with the following description: ${description}`;
-
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        
-        if (!response || !response.candidates || response.candidates.length === 0) {
-            throw new Error('No response candidates from Gemini API');
-        }
-
-        const text = response.text();
-
-        if (!text) {
-            throw new Error('Empty response text from Gemini');
-        }
-
+        const text = await generateWithFallback(prompt);
         res.status(200).json({ readme: text });
     } catch (error) {
         console.error('Gemini Readme Error:', error);

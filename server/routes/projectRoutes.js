@@ -11,6 +11,7 @@ const {
     getProjectDetails,
     getPublicProject,
     updateProjectPrivacy,
+    updateProject,
 } = require('../controllers/projectController');
 const { protect } = require('../middleware/authMiddleware');
 
@@ -21,6 +22,7 @@ router.post('/invitations/:id/respond', protect, respondToInvitation);
 router.post('/add-member', protect, addMember);
 router.post('/remove-member', protect, removeMember);
 router.put('/:id/privacy', protect, updateProjectPrivacy); // Privacy update route
+router.put('/:id', protect, updateProject); // General update (README, Name)
 router.delete('/:id', protect, deleteProject);
 router.get('/public/:id', getPublicProject); // Specific public endpoint
 router.get('/:id', protect, getProjectDetails); // Member-only details

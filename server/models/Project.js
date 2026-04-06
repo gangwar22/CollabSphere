@@ -8,8 +8,18 @@ const projectSchema = mongoose.Schema(
         },
         description: {
             type: String,
-            required: [true, 'Please add a description'],
+            default: '',
         },
+        readme: {
+            type: String,
+            default: '',
+        },
+        links: [
+            {
+                label: String,
+                url: String,
+            }
+        ],
         owner: {
             type: mongoose.Schema.Types.ObjectId,
             required: true,

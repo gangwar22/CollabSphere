@@ -11,6 +11,14 @@ const PublicProject = () => {
     const [files, setFiles] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [shareCopied, setShareCopied] = useState(false);
+    const [isReadmeExpanded, setIsReadmeExpanded] = useState(false);
+
+    const handleShare = () => {
+        navigator.clipboard.writeText(window.location.href);
+        setShareCopied(true);
+        setTimeout(() => setShareCopied(false), 2000);
+    };
 
     useEffect(() => {
         const fetchPublicData = async () => {
@@ -63,12 +71,17 @@ const PublicProject = () => {
                             <span className="text-white truncate uppercase tracking-widest text-[11px]">{project.projectName}</span>
                         </nav>
                     </div>
-                    <div className="flex items-center gap-3 shrink-0">
-                        <button className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest text-dark-text hover:bg-white/10 transition-all">
-                            <Star size={12} className="text-yellow-500" /> Star 
-                        </button>
-                        <button className="flex items-center gap-2 px-4 py-1.5 rounded-lg bg-primary-500 text-dark-bg text-[10px] font-black uppercase tracking-widest hover:brightness-110 transition-all shadow-lg shadow-primary-500/10">
-                            Fork Project
+                    <div className="flex flex-col items-end gap-2 shrink-0">
+                        <button 
+                            onClick={handleShare}
+                            className={`flex items-center gap-2 px-4 py-1.5 rounded-lg border transition-all text-[10px] font-black uppercase tracking-widest min-w-[160px] justify-center ${
+                                shareCopied 
+                                ? 'bg-green-500/10 border-green-500/50 text-green-500' 
+                                : 'bg-primary-500/10 border-primary-500/20 text-primary-400 hover:bg-primary-500 hover:text-dark-bg hover:border-primary-500 shadow-lg shadow-primary-500/5'
+                            }`}
+                        >
+                            {shareCopied ? <Check size={14} className="animate-in zoom-in duration-300" /> : <Share2 size={14} />}
+                            {shareCopied ? 'Link Copied!' : 'Share Public Repo'}
                         </button>
                     </div>
                 </div>
@@ -96,7 +109,25 @@ const PublicProject = () => {
                                 "{project.description || 'Welcome to this collaborative masterpiece, where architectural precision meets experimental innovation.'}"
                             </p>
 
-                            <div className="flex flex-wrap items-center gap-8 py-8 border-y border-white/5">
+                            <div className="mt-12 space-y-4">
+                                <h3 className="text-xs font-black text-dark-muted uppercase tracking-[0.3em] mb-4">Repository Files</h3>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    {files.map(file => (
+                                        <div key={file._id} className="p-4 rounded-2xl bg-white/5 border border-white/10 flex items-center gap-4 group hover:bg-white/10 transition-all">
+                                            <div className="w-10 h-10 rounded-xl bg-primary-500/10 flex items-center justify-center text-primary-500">
+                                                <FileText size={20} />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-bold text-white truncate">{file.fileName}</p>
+                                                <p className="text-[10px] text-dark-muted font-black uppercase tracking-widest">{new Date(file.createdAt).toLocaleDateString()}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {files.length === 0 && <p className="text-sm text-dark-muted italic px-2">No files uploaded yet.</p>}
+                                </div>
+                            </div>
+
+                            <div className="flex flex-wrap items-center gap-8 py-8 border-y border-white/5 mt-12">
                                 <div className="flex items-center gap-3 group">
                                     <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-primary-600 to-primary-400 p-[1.5px] group-hover:scale-105 transition-transform">
                                         <div className="w-full h-full rounded-[9.5px] bg-[#0d1117] flex items-center justify-center font-black text-white text-sm">
@@ -130,7 +161,6 @@ const PublicProject = () => {
                             </div>
                         </div>
 
-                        {/* File System Preview */}
                         <div className="mb-16">
                             <div className="flex items-center justify-between mb-6">
                                 <h2 className="text-[11px] font-black text-dark-muted uppercase tracking-[0.3em] flex items-center gap-3">
@@ -139,7 +169,7 @@ const PublicProject = () => {
                                 <span className="text-[10px] font-black text-primary-500/60 uppercase">{files.length} ASSETS</span>
                             </div>
                             
-                            <div className="bg-[#0d1117] border border-white/5 rounded-2xl overflow-hidden shadow-2xl">
+                            <div className="bg-[#0d1117] border border-white/5 rounded-2xl overflow-hidden shadow-2xl mb-16">
                                 {files.length > 0 ? (
                                     <div className="divide-y divide-white/5">
                                         {files.map(file => (
@@ -171,35 +201,83 @@ const PublicProject = () => {
                                     </div>
                                 )}
                             </div>
-                        </div>
 
-                        {/* Recent Activity / README style */}
-                        <div>
-                             <h2 className="text-[11px] font-black text-dark-muted uppercase tracking-[0.3em] flex items-center gap-3 mb-6">
-                                <FileText size={14} className="text-primary-500" /> Documentation Preview
-                            </h2>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {notes.length > 0 ? (
-                                    notes.map(note => (
-                                        <div key={note._id} className="p-6 rounded-[2rem] bg-[#0d1117] border border-white/5 hover:border-primary-500/20 transition-all group">
-                                            <div className="flex items-center gap-2 mb-4">
-                                                <div className="w-1 h-4 bg-primary-500 rounded-full"></div>
-                                                <h3 className="text-sm font-black text-white uppercase tracking-tight">{note.title}</h3>
+                            {/* Documentation Preview (Notes) */}
+                            <div className="mb-16">
+                                <h2 className="text-[11px] font-black text-dark-muted uppercase tracking-[0.3em] flex items-center gap-3 mb-6">
+                                    <FileText size={14} className="text-primary-500" /> Documentation Preview
+                                </h2>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {notes.length > 0 ? (
+                                        notes.map(note => (
+                                            <div key={note._id} className="p-6 rounded-[2rem] bg-[#0d1117] border border-white/5 hover:border-primary-500/20 transition-all group">
+                                                <div className="flex items-center gap-2 mb-4">
+                                                    <div className="w-1 h-4 bg-primary-500 rounded-full"></div>
+                                                    <h3 className="text-sm font-black text-white uppercase tracking-tight">{note.title}</h3>
+                                                </div>
+                                                <p className="text-xs text-[#8b949e] leading-relaxed line-clamp-3 italic mb-6">
+                                                    "{note.content}"
+                                                </p>
+                                                <div className="flex items-center justify-between text-[8px] font-black text-dark-muted uppercase tracking-widest border-t border-white/5 pt-4">
+                                                    <span>{note.createdBy?.name}</span>
+                                                    <span className="text-primary-500/60">{new Date(note.createdAt).toLocaleDateString()}</span>
+                                                </div>
                                             </div>
-                                            <p className="text-xs text-[#8b949e] leading-relaxed line-clamp-3 italic mb-6">
-                                                "{note.content}"
-                                            </p>
-                                            <div className="flex items-center justify-between text-[8px] font-black text-dark-muted uppercase tracking-widest border-t border-white/5 pt-4">
-                                                <span>{note.createdBy?.name}</span>
-                                                <span className="text-primary-500/60">{new Date(note.createdAt).toLocaleDateString()}</span>
-                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="col-span-2 p-10 rounded-[2rem] bg-white/[0.01] border border-dashed border-white/5 text-center">
+                                            <p className="text-[10px] font-black text-dark-muted uppercase tracking-widest">Documentation manifest empty</p>
                                         </div>
-                                    ))
-                                ) : (
-                                    <div className="col-span-2 p-10 rounded-[2rem] bg-white/[0.01] border border-dashed border-white/5 text-center">
-                                        <p className="text-[10px] font-black text-dark-muted uppercase tracking-widest">Documentation manifest empty</p>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* README Section - High Fidelity UI */}
+                            <div className="mt-20 group/readme">
+                                <div className="flex items-center justify-between mb-8">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-1.5 h-6 bg-primary-500 rounded-full shadow-[0_0_15px_rgba(var(--primary-rgb),0.5)]"></div>
+                                        <h2 className="text-[14px] font-black text-white uppercase tracking-[0.4em] flex items-center gap-3">
+                                            SPECIFICATION / README.md
+                                        </h2>
                                     </div>
-                                )}
+                                    <div className="h-px flex-1 bg-white/5 mx-8"></div>
+                                    <span className="text-[10px] font-black text-dark-muted uppercase tracking-widest">{project.readme?.length || 0} BYTES</span>
+                                </div>
+                                
+                                <div className="bg-[#090c10] border border-white/[0.08] rounded-[2.5rem] overflow-hidden shadow-2xl relative transition-all duration-500 hover:border-primary-500/20">
+                                    <div className={`p-10 md:p-16 prose prose-invert max-w-none transition-all duration-1000 ease-in-out ${!isReadmeExpanded ? 'max-h-[600px] overflow-hidden' : 'pb-32'}`}>
+                                        {project.readme ? (
+                                            <div className="font-sans leading-relaxed text-[#8b949e]">
+                                                {project.readme.split('\n').map((line, i) => {
+                                                    if (line.startsWith('# ')) return <h1 key={i} className="text-4xl md:text-5xl font-black text-white mb-10 pb-6 border-b border-white/10 tracking-tighter leading-tight mt-4">{line.replace('# ', '')}</h1>;
+                                                    if (line.startsWith('## ')) return <h2 key={i} className="text-2xl font-bold text-white mb-6 mt-16 tracking-tight flex items-center gap-4"><span className="text-primary-500">/</span>{line.replace('## ', '')}</h2>;
+                                                    if (line.startsWith('### ')) return <h3 key={i} className="text-xl font-bold text-white/90 mb-4 mt-10 italic">{line.replace('### ', '')}</h3>;
+                                                    if (line.startsWith('- ') || line.startsWith('* ')) return <div key={i} className="flex gap-4 ml-4 mb-3 items-start"><div className="mt-2 w-1.5 h-1.5 bg-primary-500/40 rounded-full shrink-0"></div><span className="text-[#aab3bc]">{line.substring(2)}</span></div>;
+                                                    if (line.trim() === '') return <div key={i} className="h-6" />;
+                                                    return <p key={i} className="mb-4 text-lg text-[#9da5b1] leading-[1.8] font-medium opacity-90">{line}</p>;
+                                                })}
+                                            </div>
+                                        ) : (
+                                            <div className="py-24 text-center opacity-30">
+                                                <FileText size={48} className="mx-auto mb-6 text-dark-muted" />
+                                                <p className="text-sm font-black uppercase tracking-[0.3em]">Documentation manifest unavailable</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                    
+                                    {project.readme && project.readme.length > 800 && (
+                                        <div className={`${!isReadmeExpanded ? 'absolute bottom-0 left-0 w-full h-64 bg-gradient-to-t from-[#090c10] via-[#090c10]/95 to-transparent flex items-end justify-center pb-12' : 'flex justify-center -mt-16 pb-16 relative z-10'}`}>
+                                            <button 
+                                                onClick={() => setIsReadmeExpanded(!isReadmeExpanded)}
+                                                className="group/btn flex items-center gap-4 px-10 py-4 rounded-full bg-[#161b22] border border-white/10 text-[11px] font-black uppercase tracking-[0.3em] text-white hover:bg-primary-500 hover:text-dark-bg hover:border-primary-500 hover:scale-105 transition-all shadow-[0_20px_50px_rgba(0,0,0,0.5)] active:scale-95"
+                                            >
+                                                {isReadmeExpanded ? 'MINIMIZE SPEC' : 'READ FULL SPECIFICATION'}
+                                                <ArrowRight size={16} className={`transition-transform duration-500 ${isReadmeExpanded ? '-rotate-90' : 'group-hover:translate-x-2'}`} />
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>

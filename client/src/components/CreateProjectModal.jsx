@@ -52,9 +52,8 @@ const CreateProjectModal = ({ isOpen, onClose, onCreate }) => {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium mb-2 text-dark-muted">Description</label>
+                        <label className="block text-sm font-medium mb-2 text-dark-muted">Description (Optional)</label>
                         <textarea
-                            required
                             rows="3"
                             className="w-full bg-dark-bg border border-dark-border rounded-xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all text-white resize-none"
                             placeholder="Tell us about the project..."

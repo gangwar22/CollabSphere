@@ -8,7 +8,7 @@ import AIExplainPanel from '../components/AIExplainPanel';
 import AnalyticsPanel from '../components/AnalyticsPanel';
 import {
     FileText, Files, Users, BarChart, Sparkles, Plus,
-    Trash2, UserPlus, Globe, Lock, ChevronLeft, GitBranch, Star, Eye, Settings, Code as CodeIcon, Tag, Image, Loader, X
+    Trash2, UserPlus, Globe, Lock, ChevronLeft, GitBranch, Star, Eye, Settings, Code as CodeIcon, Tag, Image, Loader, X, Link as LinkIcon, ExternalLink, Share2, Check, ArrowRight
 } from 'lucide-react';
 import Skeleton from '../components/Skeleton';
 import { useToast } from '../context/ToastContext';
@@ -87,6 +87,15 @@ const ProjectDetails = () => {
     const [codeContent, setCodeContent] = useState('');
     const [loadingContent, setLoadingContent] = useState(false);
     const [actionLoading, setActionLoading] = useState(false);
+    const [isEditingReadme, setIsEditingReadme] = useState(false);
+    const [readmeContent, setReadmeContent] = useState('');
+    const [isEditingAbout, setIsEditingAbout] = useState(false);
+    const [aboutContent, setAboutContent] = useState('');
+    const [isEditingLinks, setIsEditingLinks] = useState(false);
+    const [projectLinks, setProjectLinks] = useState([]);
+    const [newLink, setNewLink] = useState({ label: '', url: '' });
+    const [shareCopied, setShareCopied] = useState(false);
+    const [isReadmeExpanded, setIsReadmeExpanded] = useState(false);
     const { addToast } = useToast();
     
     // Get current user from local storage
@@ -107,6 +116,9 @@ const ProjectDetails = () => {
             const nRes = await API.get(`/notes/${id}`);
             const fRes = await API.get(`/files/${id}`);
             setProject(pRes.data);
+            setReadmeContent(pRes.data.readme || '');
+            setAboutContent(pRes.data.description || '');
+            setProjectLinks(pRes.data.links || []);
             setNotes(nRes.data);
             setFiles(fRes.data);
         } catch (err) {
@@ -205,6 +217,84 @@ const ProjectDetails = () => {
         setShowAI(true);
     };
 
+    const handleUpdateReadme = async () => {
+        try {
+            setActionLoading(true);
+            const res = await API.put(`/projects/${id}`, {
+                ...project,
+                readme: readmeContent
+            });
+            setProject(res.data);
+            setIsEditingReadme(false);
+            addToast('README updated successfully!', 'success');
+        } catch (err) {
+            addToast(err.response?.data?.message || 'Update failed', 'error');
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const handleUpdateAbout = async () => {
+        try {
+            setActionLoading(true);
+            const res = await API.put(`/projects/${id}`, {
+                ...project,
+                description: aboutContent
+            });
+            setProject(res.data);
+            setIsEditingAbout(false);
+            addToast('Overview updated successfully!', 'success');
+        } catch (err) {
+            addToast(err.response?.data?.message || 'Update failed', 'error');
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const handleUpdateLinks = async (updatedLinks) => {
+        try {
+            setActionLoading(true);
+            const res = await API.put(`/projects/${id}`, {
+                ...project,
+                links: updatedLinks || projectLinks
+            });
+            setProject(res.data);
+            setProjectLinks(res.data.links || []);
+            setIsEditingLinks(false);
+            addToast('Links updated successfully!', 'success');
+        } catch (err) {
+            addToast(err.response?.data?.message || 'Update failed', 'error');
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const addLink = () => {
+        if (!newLink.label || !newLink.url) {
+            addToast('Please provide both label and URL', 'error');
+            return;
+        }
+        const updated = [...projectLinks, newLink];
+        setProjectLinks(updated);
+        setNewLink({ label: '', url: '' });
+        handleUpdateLinks(updated);
+    };
+
+    const removeLink = (index) => {
+        const updated = projectLinks.filter((_, i) => i !== index);
+        setProjectLinks(updated);
+        handleUpdateLinks(updated);
+    };
+
+    const handleShareRepo = () => {
+        // Use the PublicProject URL for sharing - Must match App.jsx route
+        const publicUrl = `${window.location.origin}/public/${id}`;
+        navigator.clipboard.writeText(publicUrl);
+        setShareCopied(true);
+        addToast('Public view link copied to clipboard!', 'success');
+        setTimeout(() => setShareCopied(false), 2000);
+    };
+
     if (loading) return (
         <div className="max-w-[1280px] mx-auto px-4 space-y-8 pt-10 h-screen">
             <div className="space-y-4">
@@ -235,20 +325,18 @@ const ProjectDetails = () => {
                 </div>
 
                 <div className="flex items-center gap-2">
-                    <div className="flex items-center bg-dark-card border border-dark-border rounded-md overflow-hidden">
-                        <button className="flex items-center gap-1.5 px-3 py-1 text-xs font-semibold hover:bg-dark-hover transition-colors border-r border-dark-border">
-                            <Eye size={14} /> Watch
-                            <span className="bg-dark-border px-1.5 rounded-full text-[10px]">1</span>
-                        </button>
-                        <button className="flex items-center gap-1.5 px-3 py-1 text-xs font-semibold hover:bg-dark-hover transition-colors border-r border-dark-border">
-                            <Star size={14} /> Star
-                            <span className="bg-dark-border px-1.5 rounded-full text-[10px]">0</span>
-                        </button>
-                        <button className="flex items-center gap-1.5 px-3 py-1 text-xs font-semibold hover:bg-dark-hover transition-colors">
-                            <GitBranch size={14} /> Fork
-                            <span className="bg-dark-border px-1.5 rounded-full text-[10px]">0</span>
-                        </button>
-                    </div>
+                    <button 
+                        onClick={handleShareRepo}
+                        className={`flex items-center gap-2 px-4 py-1.5 text-[10px] font-black uppercase tracking-widest transition-all rounded-lg border border-primary-500/20 ${
+                            shareCopied 
+                            ? 'bg-green-500/10 border-green-500/50 text-green-500' 
+                            : 'bg-primary-500/10 text-primary-400 hover:bg-primary-500 hover:text-dark-bg hover:border-primary-500'
+                        } shadow-lg shadow-primary-500/5`}
+                        title="Copy Public View Link"
+                    >
+                        {shareCopied ? <Check size={14} className="animate-in zoom-in duration-300" /> : <Share2 size={14} />}
+                        <span>{shareCopied ? 'Link Copied!' : 'Share Public Repo'}</span>
+                    </button>
                 </div>
             </div>
 
@@ -256,10 +344,10 @@ const ProjectDetails = () => {
             <div className="border-b border-dark-border mb-8 scrollbar-hide overflow-x-auto">
                 <nav className="flex space-x-1 sm:space-x-4">
                     {[
-                            { id: 'code', label: 'Code', icon: CodeIcon },
-                            { id: 'docs', label: 'Documentation', icon: FileText },
-                            { id: 'activity', label: 'Insights', icon: BarChart },
-                            { id: 'settings', label: 'Settings', icon: Settings },
+                        { id: 'code', label: 'Code', icon: CodeIcon },
+                        { id: 'docs', label: 'Documentation', icon: FileText },
+                        { id: 'activity', label: 'Insights', icon: BarChart },
+                        { id: 'settings', label: 'Settings', icon: Settings },
                     ].map(({ id: tabId, label, icon: Icon }) => (
                         <button
                             key={tabId}
@@ -360,18 +448,102 @@ const ProjectDetails = () => {
                                     </div>
                                 </div>
 
-                                {project.description && (
-                                    <div className="github-card mt-6 p-4">
-                                        <h4 className="text-xs font-bold text-dark-muted uppercase tracking-widest mb-4 flex items-center gap-2">
-                                            <FileText size={14} /> README.md
-                                        </h4>
-                                        <div className="prose prose-invert max-w-none">
-                                            <p className="text-sm text-dark-text leading-relaxed">
-                                                {project.description}
-                                            </p>
+                                <div className="github-card mt-8 overflow-hidden shadow-2xl border-white/5 bg-[#0d1117] group/readme">
+                                    <div className="flex justify-between items-center px-6 py-4 border-b border-white/10 bg-white/[0.02]">
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-1.5 bg-primary-500/10 rounded-md text-primary-500">
+                                                <FileText size={16} />
+                                            </div>
+                                            <h4 className="text-[10px] font-black text-white uppercase tracking-[0.2em] flex items-center gap-2">
+                                                README.md
+                                            </h4>
                                         </div>
+                                        {isOwner && (
+                                            <button 
+                                                onClick={() => setIsEditingReadme(!isEditingReadme)}
+                                                className="text-[9px] font-black text-primary-500 hover:text-primary-400 uppercase tracking-widest px-3 py-1 rounded-full border border-primary-500/20 hover:bg-primary-500/5 transition-all"
+                                            >
+                                                {isEditingReadme ? 'EXIT EDITOR' : 'EDIT CONTENT'}
+                                            </button>
+                                        )}
                                     </div>
-                                )}
+                                    
+                                    <div className="p-8 md:p-12 relative min-h-[200px]">
+                                        {isEditingReadme ? (
+                                            <div className="space-y-6 animate-fade-in">
+                                                <textarea
+                                                    className="w-full bg-[#07090e] border border-white/10 rounded-2xl p-6 text-sm text-[#e6edf3] focus:outline-none focus:ring-2 focus:ring-primary-500/30 min-h-[400px] resize-y font-mono leading-relaxed transition-all shadow-inner"
+                                                    value={readmeContent}
+                                                    onChange={(e) => setReadmeContent(e.target.value)}
+                                                    placeholder="# Your Amazing Project\n\nExplain why this repository matters..."
+                                                />
+                                                <div className="flex justify-end gap-3 sticky bottom-0 py-4">
+                                                    <button 
+                                                        onClick={() => {
+                                                            setIsEditingReadme(false);
+                                                            setReadmeContent(project.readme || '');
+                                                        }}
+                                                        className="px-5 py-2 rounded-xl bg-white/5 text-white/60 text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-all border border-white/5"
+                                                    >
+                                                        Discard Changes
+                                                    </button>
+                                                    <button 
+                                                        onClick={handleUpdateReadme}
+                                                        disabled={actionLoading}
+                                                        className="px-6 py-2 rounded-xl bg-primary-500 text-dark-bg text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-primary-500/10"
+                                                    >
+                                                        {actionLoading ? <Loader size={12} className="animate-spin" /> : null}
+                                                        Sync Repository
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="relative">
+                                                <div className={`prose prose-invert max-w-none transition-all duration-700 ease-in-out ${!isReadmeExpanded ? 'max-h-[400px] overflow-hidden' : 'pb-20'}`}>
+                                                    {project.readme ? (
+                                                        <div className="font-sans leading-loose text-base space-y-2">
+                                                            {project.readme.split('\n').map((line, i) => {
+                                                                // High-fidelity markdown-lite rendering
+                                                                if (line.startsWith('# ')) return <h1 key={i} className="text-3xl font-black text-white mb-6 border-b border-white/10 pb-4 mt-8 tracking-tighter">{line.replace('# ', '')}</h1>;
+                                                                if (line.startsWith('## ')) return <h2 key={i} className="text-xl font-bold text-white mb-4 mt-10 tracking-tight flex items-center gap-3"><div className="w-1.5 h-6 bg-primary-500 rounded-full"></div>{line.replace('## ', '')}</h2>;
+                                                                if (line.startsWith('### ')) return <h3 key={i} className="text-lg font-bold text-white/90 mb-3 mt-8 border-l-2 border-primary-500/30 pl-3 italic">{line.replace('### ', '')}</h3>;
+                                                                if (line.startsWith('- ') || line.startsWith('* ')) return <div key={i} className="flex gap-3 ml-2 group/item items-start mb-2"><span className="text-primary-500 font-bold mt-1.5 min-w-[6px]">●</span><span className="text-[#9da5b1]">{line.substring(2)}</span></div>;
+                                                                if (line.startsWith('**') && line.endsWith('**')) return <p key={i} className="mb-4 font-bold text-primary-400">{line.replace(/\*\*/g, '')}</p>;
+                                                                if (line.trim() === '') return <div key={i} className="h-6" />;
+                                                                
+                                                                // Handle inline bold and code
+                                                                const formattedLine = line
+                                                                    .replace(/\*\*(.*?)\*\*/g, '<strong class="text-white font-bold">$1</strong>')
+                                                                    .replace(/`(.*?)`/g, '<code class="bg-white/5 px-1.5 py-0.5 rounded text-primary-400 font-mono text-sm">$1</code>');
+                                                                    
+                                                                return <p key={i} className="mb-4 text-[#9da5b1] leading-relaxed" dangerouslySetInnerHTML={{ __html: formattedLine }} />;
+                                                            })}
+                                                        </div>
+                                                    ) : (
+                                                        <div className="py-20 flex flex-col items-center justify-center opacity-40">
+                                                            <div className="w-16 h-16 rounded-full border border-dashed border-white/30 flex items-center justify-center mb-4">
+                                                                <FileText size={24} />
+                                                            </div>
+                                                            <p className="text-sm italic font-medium tracking-wide">Documentation manifest currently empty.</p>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                
+                                                {project.readme && project.readme.length > 400 && (
+                                                    <div className={`${!isReadmeExpanded ? 'absolute bottom-0 left-0 w-full h-48 bg-gradient-to-t from-[#0d1117] via-[#0d1117]/95 to-transparent flex items-end justify-center pb-8' : 'flex justify-center -mt-10 mb-10'}`}>
+                                                        <button 
+                                                            onClick={() => setIsReadmeExpanded(!isReadmeExpanded)}
+                                                            className="flex items-center gap-3 px-10 py-3.5 rounded-full bg-[#161b22] border border-white/10 text-[10px] font-black uppercase tracking-[0.3em] text-white hover:bg-primary-500 hover:text-dark-bg hover:border-primary-500 transition-all shadow-2xl active:scale-95 group/explore"
+                                                        >
+                                                            {isReadmeExpanded ? 'MINIMIZE SPEC' : 'READ FULL SPECIFICATION'}
+                                                            <ArrowRight size={14} className={`transition-transform duration-500 ${isReadmeExpanded ? '-rotate-90' : 'group-hover:translate-x-1'}`} />
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
                             </div>
                         )}
 
@@ -616,18 +788,126 @@ const ProjectDetails = () => {
                     </div>
 
                     <div className="space-y-4">
-                        <h4 className="text-xs font-semibold text-dark-text uppercase tracking-wider">About</h4>
-                        <p className="text-sm text-dark-muted leading-relaxed">
-                            {project.description || "No description provided."}
-                        </p>
-                        <div className="pt-2 flex flex-col gap-3">
-                            <div className="flex items-center gap-2 text-xs text-dark-muted">
-                                <GitBranch size={14} />
-                                <span>1 Branch</span>
+                        <div className="flex justify-between items-center">
+                            <h4 className="text-xs font-semibold text-dark-text uppercase tracking-wider flex items-center gap-2">
+                                Overview
+                            </h4>
+                            {isOwner && (
+                                <button 
+                                    onClick={() => setIsEditingAbout(!isEditingAbout)}
+                                    className="text-[10px] font-bold text-primary-500 hover:underline uppercase tracking-tighter"
+                                >
+                                    {isEditingAbout ? 'Cancel' : 'Edit'}
+                                </button>
+                            )}
+                        </div>
+
+                        {isEditingAbout ? (
+                            <div className="space-y-3 animate-fade-in">
+                                <textarea
+                                    className="w-full bg-dark-bg border border-dark-border rounded-lg p-3 text-xs text-dark-text focus:outline-none focus:ring-1 focus:ring-primary-500 min-h-[100px] resize-none"
+                                    value={aboutContent}
+                                    onChange={(e) => setAboutContent(e.target.value)}
+                                    placeholder="Add a small overview..."
+                                />
+                                <div className="flex justify-end">
+                                    <button 
+                                        onClick={handleUpdateAbout}
+                                        disabled={actionLoading}
+                                        className="github-btn-primary !py-1 !px-2 text-[10px]"
+                                    >
+                                        Save
+                                    </button>
+                                </div>
                             </div>
-                            <div className="flex items-center gap-2 text-xs text-dark-muted">
-                                <Tag size={14} />
-                                <span>0 Releases</span>
+                        ) : (
+                            <div className="text-[13px] text-dark-muted leading-relaxed line-clamp-4 hover:line-clamp-none transition-all duration-300">
+                                {project.description || (
+                                    <span className="italic opacity-50 text-[11px]">No overview provided. Click edit to add one.</span>
+                                )}
+                            </div>
+                        )}
+                        <div className="pt-2 flex flex-col gap-3">
+                            <div className="flex justify-between items-center mb-1">
+                                <h4 className="text-[10px] font-bold text-dark-text uppercase tracking-widest flex items-center gap-2">
+                                    <LinkIcon size={12} /> Links
+                                </h4>
+                                {isOwner && (
+                                    <button 
+                                        onClick={() => setIsEditingLinks(!isEditingLinks)}
+                                        className="text-[10px] font-bold text-primary-500 hover:underline"
+                                    >
+                                        {isEditingLinks ? 'Done' : 'Manage'}
+                                    </button>
+                                )}
+                            </div>
+
+                            {isEditingLinks ? (
+                                <div className="space-y-3 p-3 bg-dark-bg/50 rounded-lg border border-dark-border animate-fade-in">
+                                    <div className="space-y-2">
+                                        <input 
+                                            type="text"
+                                            placeholder="Label (e.g. Website)"
+                                            className="w-full bg-dark-bg border border-dark-border rounded px-2 py-1 text-[11px] outline-none"
+                                            value={newLink.label}
+                                            onChange={(e) => setNewLink({ ...newLink, label: e.target.value })}
+                                        />
+                                        <input 
+                                            type="text"
+                                            placeholder="URL (https://...)"
+                                            className="w-full bg-dark-bg border border-dark-border rounded px-2 py-1 text-[11px] outline-none"
+                                            value={newLink.url}
+                                            onChange={(e) => setNewLink({ ...newLink, url: e.target.value })}
+                                        />
+                                        <button 
+                                            onClick={addLink}
+                                            className="w-full py-1 bg-primary-600 hover:bg-primary-500 text-[10px] font-bold rounded flex items-center justify-center gap-1"
+                                        >
+                                            <Plus size={10} /> Add Link
+                                        </button>
+                                    </div>
+                                    {projectLinks.length > 0 && (
+                                        <div className="pt-2 border-t border-dark-border space-y-2">
+                                            {projectLinks.map((link, i) => (
+                                                <div key={i} className="flex items-center justify-between text-[11px] bg-dark-card p-1 rounded">
+                                                    <span className="truncate max-w-[120px]">{link.label}</span>
+                                                    <button onClick={() => removeLink(i)} className="text-red-500 hover:text-red-400">
+                                                        <Trash2 size={10} />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            ) : (
+                                <div className="space-y-2 max-h-40 overflow-y-auto pr-1 custom-scrollbar">
+                                    {projectLinks.length > 0 ? projectLinks.map((link, i) => (
+                                        <a 
+                                            key={i}
+                                            href={link.url.startsWith('http') ? link.url : `https://${link.url}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex items-center gap-2 text-xs text-primary-400 hover:text-primary-300 transition-colors group"
+                                        >
+                                            <LinkIcon size={12} className="shrink-0" />
+                                            <span className="truncate flex-1">{link.label}</span>
+                                            <ExternalLink size={10} className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                                        </a>
+                                    )) : (
+                                        <p className="text-[10px] text-dark-muted italic">No external links yet.</p>
+                                    )}
+                                </div>
+                            )}
+
+                            <div className="pt-2 flex flex-col gap-3">
+                                <div className="flex items-center gap-2 text-xs text-dark-muted">
+                                    <GitBranch size={14} />
+                                    <span>1 Branch</span>
+                                </div>
+                                <div className="flex items-center gap-2 text-xs text-dark-muted">
+                                    <Tag size={14} />
+                                    <span>0 Releases</span>
+                                </div>
                             </div>
                         </div>
                     </div>

@@ -11,14 +11,14 @@ const Invitation = require('../models/Invitation');
 const createProject = asyncHandler(async (req, res) => {
     const { projectName, description, isPublic } = req.body;
 
-    if (!projectName || !description) {
+    if (!projectName) {
         res.status(400);
-        throw new Error('Please add a project name and description');
+        throw new Error('Please add a project name');
     }
 
     const project = await Project.create({
         projectName,
-        description,
+        description: description || '',
         isPublic,
         owner: req.user._id,
         members: [req.user._id],
@@ -274,6 +274,39 @@ const updateProjectPrivacy = asyncHandler(async (req, res) => {
     res.status(200).json(updatedProject);
 });
 
+// @desc    Update project description (About), README, and Links
+// @route   PUT /api/projects/:id
+// @access  Private (Owner only)
+const updateProject = asyncHandler(async (req, res) => {
+    const { projectName, description, readme, links } = req.body;
+    const project = await Project.findById(req.params.id);
+
+    if (!project) {
+        res.status(404);
+        throw new Error('Project not found');
+    }
+
+    // Only owner can update project
+    if (project.owner.toString() !== req.user._id.toString()) {
+        res.status(401);
+        throw new Error('Not authorized to update project');
+    }
+
+    if (projectName) project.projectName = projectName;
+    if (description !== undefined) project.description = description;
+    if (readme !== undefined) project.readme = readme;
+    if (links !== undefined) project.links = links;
+
+    const updatedProject = await project.save();
+    
+    // Return populated project to match what frontend expects
+    const populatedProject = await Project.findById(updatedProject._id)
+        .populate('owner', 'name email')
+        .populate('members', 'name email');
+
+    res.status(200).json(populatedProject);
+});
+
 module.exports = {
     createProject,
     getMyProjects,
@@ -285,4 +318,5 @@ module.exports = {
     getProjectDetails,
     getPublicProject,
     updateProjectPrivacy,
+    updateProject,
 };
