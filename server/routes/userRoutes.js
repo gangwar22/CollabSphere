@@ -7,7 +7,6 @@ const {
     loginUser,
     getMe,
     updateMe,
-    makeAdmin,
     searchUsers,
     getUserProfile,
 } = require('../controllers/userController');
@@ -20,7 +19,6 @@ router.get('/profile', protect, getMe);
 router.put('/profile', protect, upload.single('profilePicture'), updateMe);
 router.get('/search', protect, searchUsers);
 router.get('/profile/:id', protect, getUserProfile);
-router.get('/make-admin', protect, makeAdmin);
 
 // GOOGLE AUTH
 router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));

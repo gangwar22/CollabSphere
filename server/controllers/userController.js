@@ -74,19 +74,6 @@ const getMe = asyncHandler(async (req, res) => {
     res.status(200).json(req.user);
 });
 
-const makeAdmin = asyncHandler(async (req, res) => {
-    const user = await User.findById(req.user._id);
-    if (user) {
-        user.isAdmin = true;
-        user.role = 'admin';
-        await user.save();
-        res.json({ message: 'User promoted to Admin successfully' });
-    } else {
-        res.status(404);
-        throw new Error('User not found');
-    }
-});
-
 // @desc    Search for users
 // @route   GET /api/users/search
 // @access  Private
@@ -213,7 +200,6 @@ module.exports = {
     loginUser,
     getMe,
     updateMe,
-    makeAdmin,
     searchUsers,
     getUserProfile,
 };
