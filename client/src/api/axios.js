@@ -5,8 +5,13 @@ const API = axios.create({
     baseURL: API_URL,
 });
 
-// Add a request interceptor to include JWT token
+// Add a request interceptor to include JWT token and fix path resolution
 API.interceptors.request.use((config) => {
+    // If baseURL is used and url starts with /, strip the / so it appends correctly to the path
+    if (config.baseURL && config.url && config.url.startsWith('/')) {
+        config.url = config.url.substring(1);
+    }
+
     const token = localStorage.getItem('token');
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
