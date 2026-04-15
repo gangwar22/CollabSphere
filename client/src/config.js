@@ -1,5 +1,5 @@
-const API_URL = 'https://collabsphere-rgre.onrender.com/api';
-const BASE_URL = 'https://collabsphere-rgre.onrender.com';
+const API_URL = 'https://collabsphere-jzjc.onrender.com/api';
+const BASE_URL = 'https://collabsphere-jzjc.onrender.com';
 
 console.log('Using API URL:', API_URL);
 
