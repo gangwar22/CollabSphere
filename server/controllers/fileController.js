@@ -93,6 +93,26 @@ const getProjectFiles = asyncHandler(async (req, res) => {
     res.status(200).json(files);
 });
 
+// @desc    Get public project files (no authentication required)
+// @route   GET /api/files/public/:projectId
+// @access  Public
+const getPublicProjectFiles = asyncHandler(async (req, res) => {
+    const project = await Project.findById(req.params.projectId);
+    if (!project) {
+        res.status(404);
+        throw new Error('Project not found');
+    }
+
+    // Only allow access if project is public
+    if (!project.isPublic) {
+        res.status(403);
+        throw new Error('This project is private');
+    }
+
+    const files = await File.find({ projectId: req.params.projectId }).populate('uploadedBy', 'name');
+    res.status(200).json(files);
+});
+
 // @desc    Delete file
 // @route   DELETE /api/files/:id
 // @access  Private
@@ -137,5 +157,6 @@ const deleteFile = asyncHandler(async (req, res) => {
 module.exports = {
     uploadFile,
     getProjectFiles,
+    getPublicProjectFiles,
     deleteFile,
 };

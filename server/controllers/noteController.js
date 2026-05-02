@@ -87,6 +87,26 @@ const getProjectNotes = asyncHandler(async (req, res) => {
     res.status(200).json(notes);
 });
 
+// @desc    Get public project notes (no authentication required)
+// @route   GET /api/notes/public/:projectId
+// @access  Public
+const getPublicProjectNotes = asyncHandler(async (req, res) => {
+    const project = await Project.findById(req.params.projectId);
+    if (!project) {
+        res.status(404);
+        throw new Error('Project not found');
+    }
+
+    // Only allow access if project is public
+    if (!project.isPublic) {
+        res.status(403);
+        throw new Error('This project is private');
+    }
+
+    const notes = await Note.find({ projectId: req.params.projectId }).populate('createdBy', 'name');
+    res.status(200).json(notes);
+});
+
 // @desc    Update note
 // @route   PUT /api/notes/:id
 // @access  Private
@@ -158,6 +178,7 @@ const deleteNote = asyncHandler(async (req, res) => {
 module.exports = {
     createNote,
     getProjectNotes,
+    getPublicProjectNotes,
     updateNote,
     deleteNote,
 };
