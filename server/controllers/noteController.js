@@ -91,7 +91,14 @@ const getProjectNotes = asyncHandler(async (req, res) => {
 // @route   GET /api/notes/public/:projectId
 // @access  Public
 const getPublicProjectNotes = asyncHandler(async (req, res) => {
-    const project = await Project.findById(req.params.projectId);
+    // Validate ObjectId format
+    const { projectId } = req.params;
+    if (!projectId || !projectId.match(/^[0-9a-fA-F]{24}$/)) {
+        res.status(404);
+        throw new Error('Project not found');
+    }
+
+    const project = await Project.findById(projectId);
     if (!project) {
         res.status(404);
         throw new Error('Project not found');
@@ -103,7 +110,7 @@ const getPublicProjectNotes = asyncHandler(async (req, res) => {
         throw new Error('This project is private');
     }
 
-    const notes = await Note.find({ projectId: req.params.projectId }).populate('createdBy', 'name');
+    const notes = await Note.find({ projectId }).populate('createdBy', 'name');
     res.status(200).json(notes);
 });
 

@@ -238,7 +238,14 @@ const getProjectDetails = asyncHandler(async (req, res) => {
 // @route   GET /api/projects/public/:id
 // @access  Public
 const getPublicProject = asyncHandler(async (req, res) => {
-    const project = await Project.findById(req.params.id)
+    // Validate ObjectId format
+    const { id } = req.params;
+    if (!id || !id.match(/^[0-9a-fA-F]{24}$/)) {
+        res.status(404);
+        throw new Error('Public project not found');
+    }
+
+    const project = await Project.findById(id)
         .populate('owner', 'name')
         .select('-members'); // Don't leak members for public view
 

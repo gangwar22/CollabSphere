@@ -97,7 +97,14 @@ const getProjectFiles = asyncHandler(async (req, res) => {
 // @route   GET /api/files/public/:projectId
 // @access  Public
 const getPublicProjectFiles = asyncHandler(async (req, res) => {
-    const project = await Project.findById(req.params.projectId);
+    // Validate ObjectId format
+    const { projectId } = req.params;
+    if (!projectId || !projectId.match(/^[0-9a-fA-F]{24}$/)) {
+        res.status(404);
+        throw new Error('Project not found');
+    }
+
+    const project = await Project.findById(projectId);
     if (!project) {
         res.status(404);
         throw new Error('Project not found');
@@ -109,7 +116,7 @@ const getPublicProjectFiles = asyncHandler(async (req, res) => {
         throw new Error('This project is private');
     }
 
-    const files = await File.find({ projectId: req.params.projectId }).populate('uploadedBy', 'name');
+    const files = await File.find({ projectId }).populate('uploadedBy', 'name');
     res.status(200).json(files);
 });
 
