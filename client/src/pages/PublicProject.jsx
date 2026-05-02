@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import API from '../api/axios';
 import { BASE_URL } from '../config';
-import { Globe, Code, ArrowRight, Loader, Star, GitFork, Eye, Hash, Clock, User, FileText, ChevronRight, Share2, CornerUpRight, Terminal } from 'lucide-react';
+import { Globe, Code, ArrowRight, Loader, Star, GitFork, Eye, Hash, Clock, User, FileText, ChevronRight, Share2, CornerUpRight, Terminal, Check } from 'lucide-react';
 
 const PublicProject = () => {
     const { id } = useParams();
@@ -25,9 +25,9 @@ const PublicProject = () => {
             try {
                 const { data } = await API.get(`/projects/public/${id}`);
                 setProject(data);
-                // Also fetch notes and files (allowed for public projects)
-                const nRes = await API.get(`/notes/${id}`);
-                const fRes = await API.get(`/files/${id}`);
+                // Also fetch notes and files from public endpoints (no auth required)
+                const nRes = await API.get(`/notes/public/${id}`);
+                const fRes = await API.get(`/files/public/${id}`);
                 setNotes(nRes.data);
                 setFiles(fRes.data);
             } catch (err) {
