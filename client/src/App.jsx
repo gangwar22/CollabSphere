@@ -106,7 +106,7 @@ function App() {
                             <Route path="/project/:id" element={<ProtectedRoute><ProjectDetails /></ProtectedRoute>} />
                             <Route path="/profile/:id" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
                             <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
-                            <Route path="/public/:id" element={<PublicProject />} />
+                            <Route path="/projects/public/:id" element={<PublicProject />} />
                             <Route path="/oauth-success" element={<OAuthSuccess />} />
                             <Route path="/" element={<Navigate to="/dashboard" />} />
                         </Routes>

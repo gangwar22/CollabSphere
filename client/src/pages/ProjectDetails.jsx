@@ -288,7 +288,7 @@ const ProjectDetails = () => {
 
     const handleShareRepo = () => {
         // Use the PublicProject URL for sharing - Must match App.jsx route
-        const publicUrl = `${window.location.origin}/public/${id}`;
+        const publicUrl = `${window.location.origin}/projects/public/${id}`;
         navigator.clipboard.writeText(publicUrl);
         setShareCopied(true);
         addToast('Public view link copied to clipboard!', 'success');

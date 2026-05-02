@@ -26,11 +26,22 @@ const PublicProject = () => {
                 const { data } = await API.get(`/projects/public/${id}`);
                 setProject(data);
                 // Also fetch notes and files from public endpoints (no auth required)
-                const nRes = await API.get(`/notes/public/${id}`);
-                const fRes = await API.get(`/files/public/${id}`);
-                setNotes(nRes.data);
-                setFiles(fRes.data);
+                try {
+                    const nRes = await API.get(`/notes/public/${id}`);
+                    setNotes(nRes.data || []);
+                } catch (nErr) {
+                    console.error('Error fetching notes:', nErr);
+                    setNotes([]);
+                }
+                try {
+                    const fRes = await API.get(`/files/public/${id}`);
+                    setFiles(fRes.data || []);
+                } catch (fErr) {
+                    console.error('Error fetching files:', fErr);
+                    setFiles([]);
+                }
             } catch (err) {
+                console.error('Error fetching project:', err);
                 setError('Project not found or private');
             } finally {
                 setLoading(false);
